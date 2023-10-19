@@ -1,8 +1,6 @@
 import os, sys
 sys.path.append(os.getcwd())
-# from input_configuration import *
-# import toml
-# config = toml.load(os.path.join(os.getcwd(), 'configuration/input_configuration.toml'))
+from input_configuration import *
 
 parcels_file_name = 'inputs/scenario/landuse/parcels_urbansim.txt'
 output_parcels = 'outputs/landuse/buffered_parcels.txt'

@@ -13,9 +13,7 @@ import numpy as np
 import pandana as pdna
 import inro.emme.database.emmebank as _eb
 from pyproj import Proj, transform
-# from input_configuration import base_year
-import toml
-config = toml.load(os.path.join(os.getcwd(), 'configuration/input_configuration.toml'))
+from input_configuration import base_year
 
 
 def assign_nodes_to_dataset(dataset, network, column_name, x_name, y_name):
@@ -227,7 +225,7 @@ def main():
     links = pd.read_csv(r'inputs/base_year/all_streets_links.csv', index_col=None)
 
     # Load geography lookups and join to parcel data
-    parcel_geog = pd.read_sql_table('parcel_'+config['base_year']+'_geography', 'sqlite:///inputs/db/soundcast_inputs.db')
+    parcel_geog = pd.read_sql_table('parcel_'+base_year+'_geography', 'sqlite:///inputs/db/soundcast_inputs.db')
     parcel_geog['region'] = 1
         
     # Create a field that identifies whether parcel is inside or outside of an RGC
@@ -292,16 +290,15 @@ def main():
         df = df.append(_df)
 
     # Add summaries by race from synthetic population
-    if 'prace' in person_df.columns:
-        avg_race_df = person_df[['hhno','pno','prace']].merge(hh_df[['hhno','hhparcel']], on='hhno', how='left')
-        avg_race_df = avg_race_df.merge(origin_dest_emp, left_on='hhparcel', right_on='PARCELID', how='left')
-        # Write person records with individual jobs access
-        avg_race_df.to_csv(os.path.join(output_dir,'transit_jobs_access_person.csv'))
-        avg_race_df  = avg_race_df.groupby('prace').mean()[['EMPTOT_P']]
-        avg_race_df = avg_race_df.reset_index()
-        avg_race_df.rename(columns={'prace': 'geography', 'EMPTOT_P': 'value'}, inplace=True)
-        avg_race_df['geography_group'] = 'race'
-        df = df.append(avg_race_df)
+    avg_race_df = person_df[['hhno','pno','prace']].merge(hh_df[['hhno','hhparcel']], on='hhno', how='left')
+    avg_race_df = avg_race_df.merge(origin_dest_emp, left_on='hhparcel', right_on='PARCELID', how='left')
+    # Write person records with individual jobs access
+    avg_race_df.to_csv(os.path.join(output_dir,'transit_jobs_access_person.csv'))
+    avg_race_df  = avg_race_df.groupby('prace').mean()[['EMPTOT_P']]
+    avg_race_df = avg_race_df.reset_index()
+    avg_race_df.rename(columns={'prace': 'geography', 'EMPTOT_P': 'value'}, inplace=True)
+    avg_race_df['geography_group'] = 'race'
+    df = df.append(avg_race_df)
 
     df.to_csv(os.path.join(output_dir,'transit_jobs_access.csv'))
 
@@ -336,15 +333,14 @@ def main():
         _df.columns = ['geography', 'value','geography_group']
         df = df.append(_df)
 
-    if 'prace' in person_df.columns:
-        avg_race_df = person_df[['hhno','pno','prace']].merge(hh_df[['hhno','hhparcel']], on='hhno', how='left')
-        avg_race_df = avg_race_df.merge(origin_dest_emp, left_on='hhparcel', right_on='PARCELID', how='left')
-        avg_race_df.to_csv(os.path.join(output_dir,'auto_jobs_access_person.csv'))
-        avg_race_df  = avg_race_df.groupby('prace').mean()[['EMPTOT_P']]
-        avg_race_df = avg_race_df.reset_index()
-        avg_race_df.rename(columns={'prace': 'geography', 'EMPTOT_P': 'value'}, inplace=True)
-        avg_race_df['geography_group'] = 'race'
-        df = df.append(avg_race_df)
+    avg_race_df = person_df[['hhno','pno','prace']].merge(hh_df[['hhno','hhparcel']], on='hhno', how='left')
+    avg_race_df = avg_race_df.merge(origin_dest_emp, left_on='hhparcel', right_on='PARCELID', how='left')
+    avg_race_df.to_csv(os.path.join(output_dir,'auto_jobs_access_person.csv'))
+    avg_race_df  = avg_race_df.groupby('prace').mean()[['EMPTOT_P']]
+    avg_race_df = avg_race_df.reset_index()
+    avg_race_df.rename(columns={'prace': 'geography', 'EMPTOT_P': 'value'}, inplace=True)
+    avg_race_df['geography_group'] = 'race'
+    df = df.append(avg_race_df)
     df.to_csv(os.path.join(output_dir,'auto_jobs_access.csv'))
 
 if __name__ == "__main__":
