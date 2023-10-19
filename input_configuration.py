@@ -7,7 +7,7 @@ model_year = '2018'
 base_year = '2018'
 landuse_inputs = 'v3.0_RTP'
 network_inputs = 'rtp_2018_final'
-soundcast_inputs_dir = 'E:/projects/clients/SeaTac/Data/Other/PSRC/Model/SoundCast_Inputs'
+soundcast_inputs_dir = 'E:/projects/clients/SeaTac/GitHub/SeaCastScenarioInputs'
 
 ##############################
 # Initial Setup
