@@ -73,7 +73,7 @@ def load_data_to_emme(balanced_prod_att, my_project, zones, conn):
     for truck_type in ['m','h','d']:    # Loop through medium (m) and heavy (h) trucks
         for datatype in ['pro', 'att']:
             col_values = np.zeros(len(zones))
-            numpy_data = balanced_prod_att[truck_type + 'tk' + datatype].values
+            numpy_data = balanced_prod_att[truck_type + 'tk' + datatype].reindex(zones,fill_value=0).values
             col_values[:len(numpy_data)] = numpy_data
             mat_name = 'mo' + truck_type + 't' + datatype
             matrix_id = my_project.bank.matrix(str(mat_name)).id
@@ -329,7 +329,7 @@ def main():
     truck_matrix_list = pd.read_csv(r'inputs/model/trucks/truck_matrices.csv')
     
     conn = create_engine('sqlite:///inputs/db/soundcast_inputs.db')
-    balanced_prod_att = pd.read_csv(r'outputs/supplemental/7_balance_trip_ends.csv')
+    balanced_prod_att = pd.read_csv(r'outputs/supplemental/7_balance_trip_ends.csv', index_col='taz')
 
     network_importer(my_project)
     zones = my_project.current_scenario.zone_numbers
