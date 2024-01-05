@@ -79,18 +79,22 @@ def get_transit_information(bank):
     rail_time = bank.matrix('auxwr').get_numpy_data() + bank.matrix('twtwr').get_numpy_data() + bank.matrix('ivtwr').get_numpy_data() 
     ferry_time = bank.matrix('auxwf').get_numpy_data() + bank.matrix('twtwf').get_numpy_data() + bank.matrix('ivtwf').get_numpy_data()
     p_ferry_time = bank.matrix('auxwp').get_numpy_data() + bank.matrix('twtwp').get_numpy_data() + bank.matrix('ivtwp').get_numpy_data() 
-    commuter_rail_time = bank.matrix('auxwc').get_numpy_data() + bank.matrix('twtwc').get_numpy_data() + bank.matrix('ivtwc').get_numpy_data() 
+    commuter_rail_time = bank.matrix('auxwc').get_numpy_data() + bank.matrix('twtwc').get_numpy_data() + bank.matrix('ivtwc').get_numpy_data()
+    current_scenario = bank.scenario('1002')
+    zonesDim = len(current_scenario.zone_numbers)
+    zones = current_scenario.zone_numbers
+    dictZoneLookup = dict((index,value) for index,value in enumerate(zones))
     # Take the shortest transit time between bus or rail
     #transit_time = np.minimum(bus_time, rail_time)
     transit_time = np.minimum.reduce([bus_time, rail_time, ferry_time, p_ferry_time, commuter_rail_time])
-    transit_time = transit_time[0:3700, 0:3700]
+    transit_time = transit_time[0:zonesDim, 0:zonesDim]
     transit_time_df = pd.DataFrame(transit_time)
     transit_time_df['from'] = transit_time_df.index
-    transit_time_df = pd.melt(transit_time_df, id_vars= 'from', value_vars=list(transit_time_df.columns[0:3700]), var_name = 'to', value_name='travel_time')
+    transit_time_df = pd.melt(transit_time_df, id_vars= 'from', value_vars=list(transit_time_df.columns[0:zonesDim]), var_name = 'to', value_name='travel_time')
 
     # Join with parcel data; add 1 to get zone ID because emme matrices are indexed starting with 0
-    transit_time_df['to'] = transit_time_df['to'] + 1 
-    transit_time_df['from'] = transit_time_df['from'] + 1
+    transit_time_df['to'] = transit_time_df['to'].map(dictZoneLookup)
+    transit_time_df['from'] = transit_time_df['from'].map(dictZoneLookup)
 
     return transit_time_df
 
@@ -308,15 +312,19 @@ def main():
 
     # Calculate auto time access
     auto_time = bank.matrix('sov_inc2t').get_numpy_data()
+    current_scenario = bank.scenario('1002')
+    zonesDim = len(current_scenario.zone_numbers)
+    zones = current_scenario.zone_numbers
+    dictZoneLookup = dict((index,value) for index,value in enumerate(zones))
 
-    auto_time = auto_time[0:3700, 0:3700]
+    auto_time = auto_time[0:zonesDim, 0:zonesDim]
     auto_time_df = pd.DataFrame(auto_time)
     auto_time_df['from'] = auto_time_df.index
-    auto_time_df = pd.melt(auto_time_df, id_vars= 'from', value_vars=list(auto_time_df.columns[0:3700]), var_name = 'to', value_name='travel_time')
+    auto_time_df = pd.melt(auto_time_df, id_vars= 'from', value_vars=list(auto_time_df.columns[0:zonesDim]), var_name = 'to', value_name='travel_time')
 
     # Join with parcel data; add 1 to get zone ID because emme matrices are indexed starting with 0
-    auto_time_df['to'] = auto_time_df['to'] + 1 
-    auto_time_df['from'] = auto_time_df['from'] + 1
+    auto_time_df['to'] = auto_time_df['to'].map(dictZoneLookup)
+    auto_time_df['from'] = auto_time_df['from'].map(dictZoneLookup)
 
 
     origin_dest_emp = get_parcel_data_max_travel_time(auto_time_df, auto_time_max, origin_df, dest_df, parcel_attributes_list, include_intrazonal = False)
