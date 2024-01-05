@@ -2,7 +2,7 @@
 #################################
 # Summary Comparisons
 #################################
-run_rtp = True
+run_rtp = False
 run_comparison = False
 comparison_dict = {
     '2018' : r'C:\Workspace\sc_2018_rtp\soundcast',

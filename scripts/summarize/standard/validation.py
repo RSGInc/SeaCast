@@ -119,6 +119,14 @@ def main():
     # Write to file
     df.to_csv(os.path.join(validation_output_dir,'daily_boardings_by_line.csv'), index=False)
 
+    # Write SeaTac transit routes
+    seatac_routes = pd.read_csv(r'inputs\model\lookup\seatac_transit_routes.csv')
+    df[df.route_id.isin(seatac_routes.seatac_route_code.values)].to_csv(os.path.join(validation_output_dir, 'daily_boardings_by_lines_seatac.csv'), index=False)
+
+    # Write SeaTac transit routes
+    seatac_airport_routes = pd.read_csv(r'inputs\model\lookup\seatac_airport_transit_routes.csv')
+    df[df.route_id.isin(seatac_airport_routes.seatac_airport_route_code.values)].to_csv(os.path.join(validation_output_dir, 'daily_boardings_by_lines_airport_seatac.csv'), index=False)
+
     # Boardings by agency
     df_agency = df.groupby(['agency']).sum().reset_index()
     df_agency['diff'] = df_agency['modeled_5to20']-df_agency['observed_5to20']
@@ -177,22 +185,22 @@ def main():
     # Get daily and model volumes
     #daily_counts = counts.groupby('flag').sum()[['vehicles']].reset_index()
     daily_counts = pd.read_sql("SELECT * FROM daily_counts WHERE year=" + str(base_year), con=conn)
-    df_daily = model_vol_df.groupby(['@countid']).agg({'@tveh':'sum', '@facilitytype': 'first'}).reset_index()
+    df_daily = model_vol_df.groupby(['@countid']).agg({'@tveh':'sum', '@facilitytype': 'first', '@subarea_flag':'first'}).reset_index()
 
     # Merge observed with model
     df_daily = df_daily.merge(daily_counts, left_on='@countid', right_on='flag')
 
     # Merge with attributes
-    df_daily.rename(columns={'@tveh': 'modeled','vehicles': 'observed'}, inplace=True)
+    df_daily.rename(columns={'@tveh': 'modeled','vehicles': 'observed','@subarea_flag':'subarea_flag'}, inplace=True)
     df_daily['diff'] = df_daily['modeled']-df_daily['observed']
     df_daily['perc_diff'] = df_daily['diff']/df_daily['observed']
     df_daily[['modeled','observed']] = df_daily[['modeled','observed']].astype('int')
     df_daily['county'] = df_daily['countyid'].map(county_lookup)
     df_daily.to_csv(os.path.join(validation_output_dir,'daily_volume.csv'), 
-                        index=False, columns=['@countid','@countid','county','@facilitytype','modeled','observed','diff','perc_diff'])
+                        index=False, columns=['@countid','@countid','county', 'subarea_flag','@facilitytype','modeled','observed','diff','perc_diff'])
 
     # Counts by county and facility type
-    df_county_facility_counts = df_daily.groupby(['county','@facilitytype']).sum()[['observed','modeled']].reset_index()
+    df_county_facility_counts = df_daily.groupby(['county','@facilitytype','subarea_flag']).sum()[['observed','modeled']].reset_index()
     df_county_facility_counts.to_csv(os.path.join(validation_output_dir,'daily_volume_county_facility.csv'))
 
     # hourly counts
@@ -205,11 +213,11 @@ def main():
     hr_model = model_vol_df.groupby(['@countid','tod']).agg({'@tveh':'sum','@facilitytype':'first',
                                                   '@countyid':'first','i_node':'first',
                                                   'j_node':'first','auto_time':'first',
-                                                  'type':'first'}).reset_index()
+                                                  'type':'first', '@subarea_flag':'first'}).reset_index()
 
     # Join by time of day and flag ID
     df = pd.merge(hr_model, counts_tod, left_on=['@countid','tod'], right_on=['flag','tod'])
-    df.rename(columns={'@tveh': 'modeled', 'vehicles': 'observed'}, inplace=True)
+    df.rename(columns={'@tveh': 'modeled', 'vehicles': 'observed','@subarea_flag':'subarea_flag'}, inplace=True)
     df['county'] = df['@countyid'].map(county_lookup)
     df.to_csv(os.path.join(validation_output_dir,'hourly_volume.csv'), index=False)
 
@@ -259,11 +267,11 @@ def main():
     df_model['screenline_id'] = df_model['type'].astype('str')
     # Auburn screenline is the combination of 14 and 15, change label for 14 and 15 to a combined label
     df_model.loc[df_model['screenline_id'].isin(['14','15']),'screenline_id'] = '14/15'
-    _df = df_model.groupby('screenline_id').sum()[['@tveh']].reset_index()
+    _df = df_model.groupby(['screenline_id', '@subarea_flag']).sum()[['@tveh']].reset_index()
 
     _df = _df.merge(df_obs, on='screenline_id')
-    _df.rename(columns={'@tveh':'modeled'},inplace=True)
-    _df = _df[['name','observed','modeled','county']]
+    _df.rename(columns={'@tveh':'modeled', '@subarea_flag':'subarea_flag'},inplace=True)
+    _df = _df[['name','observed','modeled','county', 'subarea_flag']]
     _df['diff'] = _df['modeled']-_df['observed']
     _df = _df.sort_values('observed',ascending=False)
     _df.to_csv(r'outputs\validation\screenlines.csv', index=False)
@@ -337,9 +345,10 @@ def main():
     # Note that we need to separate out the Managed HOV lanes
     df_speed = df_speed[df_speed['@is_managed'] == 0]
 
-    df_speed = df_speed.groupby(['Corridor_Number','tod']).sum()[['auto_time','length']].reset_index()
+    df_speed = df_speed.groupby(['Corridor_Number','tod','@subarea_flag']).sum()[['auto_time','length']].reset_index()
     df_speed['model_speed'] = (df_speed['length']/df_speed['auto_time'])*60
     df_speed = df_speed[(df_speed['model_speed'] < 80) & ((df_speed['model_speed'] > 0))]
+    df_speed = df_speed.rename(columns={'@subarea_flag':'subarea_flag'})
 
     # Join to the observed data
     df_speed = df_speed.merge(_df,on=['Corridor_Number','tod'])
@@ -467,7 +476,7 @@ def main():
     # Add geography columns based on tract
     parcel_geog = pd.read_sql("SELECT * FROM parcel_"+str(base_year)+"_geography", con=conn) 
 
-    tract_geog = parcel_geog.groupby('Census2010Tract').first()[['CountyName','rg_proposed','CityName','GrowthCenterName','TAZ','District']].reset_index()
+    tract_geog = parcel_geog.groupby('Census2010Tract').first()[['CountyName','rg_proposed','CityName','GrowthCenterName','TAZ','District','subarea_flag']].reset_index()
     df = df.merge(tract_geog, left_on='geoid', right_on='Census2010Tract', how='left')
     df.to_csv(r'outputs\validation\acs_commute_share_by_home_tract.csv', index=False)
 	

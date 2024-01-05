@@ -2913,8 +2913,8 @@ taz_p,rg_proposed
 2912,Metropolitan Cities
 2913,Metropolitan Cities
 2914,Metropolitan Cities
-2915,Urban Unincorporated
-2916,Rural
+2915,Metropolitan Cities
+2916,Urban Unincorporated
 2917,Rural
 2918,Rural
 2919,Rural
@@ -2922,36 +2922,36 @@ taz_p,rg_proposed
 2921,Rural
 2922,Rural
 2923,Rural
-2924,Urban Unincorporated
+2924,Rural
 2925,Urban Unincorporated
 2926,Urban Unincorporated
 2927,Urban Unincorporated
-2928,HCT Communities
+2928,Urban Unincorporated
 2929,HCT Communities
 2930,HCT Communities
 2931,HCT Communities
 2932,HCT Communities
 2933,HCT Communities
-2934,Metropolitan Cities
-2935,Rural
+2934,HCT Communities
+2935,Metropolitan Cities
 2936,Rural
-2937,HCT Communities
+2937,Rural
 2938,HCT Communities
 2939,HCT Communities
-2940,Urban Unincorporated
+2940,HCT Communities
 2941,Urban Unincorporated
 2942,Urban Unincorporated
-2943,Rural
+2943,Urban Unincorporated
 2944,Rural
 2945,Rural
 2946,Rural
-2947,Urban Unincorporated
+2947,Rural
 2948,Urban Unincorporated
-2949,Rural
+2949,Urban Unincorporated
 2950,Rural
 2951,Rural
-2952,HCT Communities
-2953,Rural
+2952,Rural
+2953,HCT Communities
 2954,Rural
 2955,Rural
 2956,Rural
@@ -2963,8 +2963,9 @@ taz_p,rg_proposed
 2962,Rural
 2963,Rural
 2964,Rural
-2965,HCT Communities
+2965,Rural
 2966,HCT Communities
 2967,HCT Communities
 2968,HCT Communities
 2969,HCT Communities
+2970,HCT Communities

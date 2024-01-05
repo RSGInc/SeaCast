@@ -23,7 +23,7 @@ shadow_con = 30 #%RMSE for shadow pricing to consider being converged
 ################################### 
 MIN_EXTERNAL = 3733      #zone of externals (subtract 1 because numpy is zero-based)
 MAX_EXTERNAL = 3750      #zone of externals (subtract 1 because numpy is zero-based)
-HIGH_TAZ = 3700
+HIGH_TAZ = 2970
 LOW_PNR = 3751
 HIGH_PNR = 4000
 SEATAC = 1
@@ -57,7 +57,7 @@ rdly_factor = .25
 coord_unit_length = 0.0001894    # network links measured in feet, converted to miles (1/5280)
 main_log_file = 'soundcast_log.txt'
 
-link_extra_attributes = ['@facilitytype', '@countyid', '@countid', '@corridorid', '@is_managed','@bkfac','@upslp', '@toll1', '@toll2', '@toll3', '@trkc1', '@trkc2', '@trkc3', '@fgts', '@ttf'] 
+link_extra_attributes = ['@facilitytype', '@countyid', '@countid', '@corridorid', '@is_managed','@bkfac','@upslp', '@toll1', '@toll2', '@toll3', '@trkc1', '@trkc2', '@trkc3', '@fgts', '@ttf', '@subarea_flag'] 
 node_extra_attributes = ['@lr_walk','@hdwfr','@wait','@invt']
 transit_line_extra_attributes = ['@transittype']
 
@@ -89,8 +89,8 @@ skim_matrix_designation_all_tods = ['t','c']  # Time (t) and direct cost (c) ski
 skim_matrix_designation_limited = ['d']    # Distance skim
 
 # Skim for distance for only these time periods
-distance_skim_tod = ['7to8', '17to18']
-generalized_cost_tod = ['7to8', '17to18']
+distance_skim_tod = ['5to6', '7to8', '10to14', '17to18', '18to20']
+generalized_cost_tod = ['5to6', '7to8', '10to14', '17to18', '18to20']
 gc_skims = {'medium_trucks' : 'metrk', 'heavy_trucks' : 'hvtrk', 'sov' : 'sov_inc2', 'delivery_trucks': 'deltrk'}
 truck_trips_h5_filename = 'outputs/trucks/truck_trips.h5'
 

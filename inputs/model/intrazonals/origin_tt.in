@@ -2910,13 +2910,13 @@ m matrix=mo"prodtt"
  2905 all: 2
  2906 all: 2
  2907 all: 2
- 2908 all: 4
+ 2908 all: 2
  2909 all: 2
  2910 all: 1
  2911 all: 2
  2912 all: 2
- 2913 all: 2
- 2914 all: 1
+ 2913 all: 4
+ 2914 all: 2
  2915 all: 1
  2916 all: 1
  2917 all: 1
@@ -2931,10 +2931,10 @@ m matrix=mo"prodtt"
  2926 all: 1
  2927 all: 1
  2928 all: 1
- 2929 all: 2
+ 2929 all: 1
  2930 all: 2
  2931 all: 2
- 2932 all: 1
+ 2932 all: 2
  2933 all: 1
  2934 all: 1
  2935 all: 1
@@ -2972,6 +2972,7 @@ m matrix=mo"prodtt"
  2967 all: 1
  2968 all: 1
  2969 all: 1
+ 2970 all: 1
  3733 all: 30
  3734 all: 30
  3735 all: 30
