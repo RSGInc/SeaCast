@@ -221,6 +221,28 @@ def main():
     df['county'] = df['@countyid'].map(county_lookup)
     df.to_csv(os.path.join(validation_output_dir,'hourly_volume.csv'), index=False)
 
+    # Truck counts
+    truck_counts = pd.read_sql("SELECT * FROM daily_truck_counts", con=conn)
+    df_truck_daily = model_vol_df.groupby(['@countid']).agg({'@mveh':'sum', '@hveh':'sum', '@facilitytype': 'first', '@subarea_flag':'first'}).reset_index()
+    # Merge observed with model
+    df_truck_daily = df_truck_daily.merge(truck_counts, left_on='@countid', right_on='flag')
+
+    # Merge with attributes
+    df_truck_daily.rename(columns={'@mveh': 'modeled_medt','@hveh': 'modeled_hvyt','@subarea_flag':'subarea_flag'}, inplace=True)
+    df_truck_daily['diff_medt'] = df_truck_daily['modeled_medt']-df_truck_daily['observed_medt']
+    df_truck_daily['perc_diff_medt'] = df_truck_daily['diff_medt']/df_truck_daily['observed_medt']
+    df_truck_daily[['modeled_medt','observed_medt']] = df_truck_daily[['modeled_medt','observed_medt']].apply(lambda x: round(x,2))
+    df_truck_daily['diff_hvyt'] = df_truck_daily['modeled_hvyt']-df_truck_daily['observed_hvyt']
+    df_truck_daily['perc_diff_hvyt'] = df_truck_daily['diff_hvyt']/df_truck_daily['observed_hvyt']
+    df_truck_daily[['modeled_hvyt','observed_hvyt']] = df_truck_daily[['modeled_hvyt','observed_hvyt']].apply(lambda x: round(x,2))
+    df_truck_daily['modeled'] = df_truck_daily['modeled_medt']+df_truck_daily['modeled_hvyt']
+    df_truck_daily['observed'] = df_truck_daily['observed_medt']+df_truck_daily['observed_hvyt']
+    df_truck_daily['diff'] = df_truck_daily['modeled']-df_truck_daily['observed']
+    df_truck_daily['perc_diff'] = df_truck_daily['diff']/df_truck_daily['observed']
+    df_truck_daily[['modeled','observed']] = df_truck_daily[['modeled','observed']].apply(lambda x: round(x,2))
+    df_truck_daily.to_csv(os.path.join(validation_output_dir,'daily_truck_volume.csv'), 
+                        index=False)
+
     # Roll up results to assignment periods
     df['time_period'] = df['tod'].map(sound_cast_net_dict)
 
