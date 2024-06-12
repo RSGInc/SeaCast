@@ -1,0 +1,67 @@
+Description,Target,Expression
+,_destination,df.destination
+,_destination,"np.where((df.trip_mode == 'PARK_LOC1') & (df.outbound == False), parkLocation1TAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'PARK_LOC2') & (df.outbound == False), parkLocation2TAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'PARK_LOC3') & (df.outbound == False), parkLocation3TAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'PARK_LOC4') & (df.outbound == False), parkLocation4TAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'PARK_LOC5') & (df.outbound == False), parkLocation5TAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'PARK_ESCORT') & (df.outbound == False), parkEscortLocationTAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'RENTAL') & (df.outbound == False), rentalLocationTAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'SHUTTLEVAN') & (df.outbound == False), shuttleVanTAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'HOTEL_COURTESY') & (df.outbound == False), hotelCourtesyTAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'RIDEHAIL_LOC1') & (df.outbound == False), ridehailLocation1TAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'RIDEHAIL_LOC2') & (df.outbound == False), ridehailLocation2TAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'TAXI_LOC1') & (df.outbound == False), ridehailLocation1TAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'TAXI_LOC2') & (df.outbound == False), ridehailLocation2TAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'CURB_LOC1') & (df.outbound == False), curbLocation1TAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'CURB_LOC2') & (df.outbound == False), curbLocation2TAZ, _destination)"
+,curb_eval_test,"np.where((df.trip_mode == 'CURB_LOC2') & (df.outbound == False), 1, 0)"
+,curb_location_test,curbLocation2TAZ
+,_destination,"np.where((df.trip_mode == 'CURB_LOC3') & (df.outbound == False), curbLocation3TAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'CURB_LOC4') & (df.outbound == False), curbLocation4TAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'CURB_LOC5') & (df.outbound == False), curbLocation5TAZ, _destination)"
+,_destination,"np.where(df.trip_mode.isin(['WALK_BUS', 'WALK_LR', 'WALK_CR', 'WALK_FR', 'WALK_FP']) & (df.outbound == False), transitTAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'EMP_WALK') & (df.outbound == False), terminalTAZ, _destination)"
+,_destination,"np.where((df.trip_mode == 'EMP_TRANSIT') & (df.outbound == False), terminalTAZ, _destination)"
+,destination,_destination
+,_origin,df.origin
+,_origin,"np.where((df.trip_mode == 'PARK_LOC1') & (df.outbound == True), parkLocation1TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'PARK_LOC2') & (df.outbound == True), parkLocation2TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'PARK_LOC3') & (df.outbound == True), parkLocation3TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'PARK_LOC4') & (df.outbound == True), parkLocation4TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'PARK_LOC5') & (df.outbound == True), parkLocation5TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'PARK_ESCORT') & (df.outbound == True), parkEscortLocationTAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'RENTAL') & (df.outbound == True), rentalLocationTAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'SHUTTLEVAN') & (df.outbound == True), shuttleVanTAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'HOTEL_COURTESY') & (df.outbound == True), hotelCourtesyTAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'RIDEHAIL_LOC1') & (df.outbound == True), ridehailLocation1TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'RIDEHAIL_LOC2') & (df.outbound == True), ridehailLocation2TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'TAXI_LOC1') & (df.outbound == True), ridehailLocation1TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'TAXI_LOC2') & (df.outbound == True), ridehailLocation2TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'CURB_LOC1') & (df.outbound == True), curbLocation1TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'CURB_LOC2') & (df.outbound == True), curbLocation2TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'CURB_LOC3') & (df.outbound == True), curbLocation3TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'CURB_LOC4') & (df.outbound == True), curbLocation4TAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'CURB_LOC5') & (df.outbound == True), curbLocation5TAZ, _origin)"
+,_origin,"np.where(df.trip_mode.isin(['WALK_BUS', 'WALK_LR', 'WALK_CR', 'WALK_FR', 'WALK_FP']) & (df.outbound == True), transitTAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'EMP_WALK') & (df.outbound == True), terminalTAZ, _origin)"
+,_origin,"np.where((df.trip_mode == 'EMP_TRANSIT') & (df.outbound == True), terminalTAZ, _origin)"
+,origin,_origin
+#,,
+,_daily_parking_cost,"(df.trip_mode=='PARK_LOC1')*parkLocation1CostDay"
+,_daily_parking_cost,"_daily_parking_cost+(df.trip_mode=='PARK_LOC2')*parkLocation2CostDay"
+,_daily_parking_cost,"_daily_parking_cost+(df.trip_mode=='PARK_LOC3')*parkLocation3CostDay"
+,_daily_parking_cost,"_daily_parking_cost+(df.trip_mode=='PARK_LOC4')*parkLocation4CostDay"
+,daily_parking_cost,"_daily_parking_cost+(df.trip_mode=='PARK_LOC5')*parkLocation5CostDay"
+#,,
+,_ridehail_cost,0
+,_ridehail_cost,"_ridehail_cost + np.where(df.trip_mode == 'RIDEHAIL_LOC1',1,0) * (df.partySizeRideHailLocation1AutoDist*ridehailCostPerMile)"
+,ridehail_cost,"_ridehail_cost + np.where(df.trip_mode == 'RIDEHAIL_LOC2',1,0) * (df.partySizeRideHailLocation2AutoDist*ridehailCostPerMile)"
+#,,
+,_transit_walk_time_weighted,0
+,_transit_walk_time_weighted,"np.where((df.trip_mode == 'WALK_BUS'), df.walk_bus_aux, _transit_walk_time_weighted)"
+,_transit_walk_time_weighted,"np.where((df.trip_mode == 'WALK_LR'), df.walk_lrail_aux, _transit_walk_time_weighted)"
+,_transit_walk_time_weighted,"np.where((df.trip_mode == 'WALK_CR'), df.walk_crail_aux, _transit_walk_time_weighted)"
+,_transit_walk_time_weighted,"np.where((df.trip_mode == 'WALK_FR'), df.walk_ferry_aux, _transit_walk_time_weighted)"
+,_transit_walk_time_weighted,"np.where((df.trip_mode == 'WALK_FP'), df.walk_pferry_aux, _transit_walk_time_weighted)"
+Transit walk time in miles,transit_walk_dist,_transit_walk_time_weighted / aux_walk_time_multiplier * (3 / 60)

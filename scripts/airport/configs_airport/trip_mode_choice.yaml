@@ -1,0 +1,221 @@
+SPEC: trip_mode_choice.csv
+COEFFICIENTS: trip_mode_choice_coefficients.csv
+COEFFICIENT_TEMPLATE: trip_mode_choice_coefficients_template.csv
+
+
+LOGIT_TYPE: NL
+
+NESTS:
+  name: root
+  coefficient: coef_nest_root
+  alternatives:
+      - name: PARK
+        coefficient: coef_nest_PARK
+        alternatives:
+            - PARK_LOC1
+            - PARK_LOC2
+            - PARK_LOC3
+            - PARK_LOC4
+            - PARK_LOC5
+      - name: PRK_ESCRT
+        coefficient: coef_nest_PARK_ESCORT
+        alternatives:
+          - PARK_ESCORT
+      - name: RNTL
+        coefficient: coef_nest_RENTAL
+        alternatives:
+          - RENTAL
+      - name: SHTTLVAN
+        coefficient: coef_nest_SHUTTLEVAN
+        alternatives:
+          - SHUTTLEVAN
+      - name: HOTEL_CRTSY
+        coefficient: coef_nest_HOTEL_COURTESY
+        alternatives:
+          - HOTEL_COURTESY         
+      - name: RIDEHAIL
+        coefficient: coef_nest_RIDEHAIL
+        alternatives:
+          - RIDEHAIL_LOC1
+          - RIDEHAIL_LOC2
+          - TAXI_LOC1
+          - TAXI_LOC2
+      - name: TRANSIT
+        coefficient:  coef_nest_TRANSIT
+        alternatives:
+            - name: WALKACCESS
+              coefficient: coef_nest_TRANSIT_WALKACCESS
+              alternatives:
+              - WALK_BUS
+              - WALK_LR
+              - WALK_CR
+              - WALK_FR
+              - WALK_FP
+      - name: CURB
+        coefficient: coef_nest_CURB
+        alternatives:
+          - CURB_LOC1
+          - CURB_LOC2
+          - CURB_LOC3
+          - CURB_LOC4
+          - CURB_LOC5
+      - name: EMP
+        coefficient: coef_one
+        alternatives:
+          - EMP_WALK
+          - EMP_TRANSIT
+      # - name: WLK
+      #   coefficient: coef_nest_WALK
+      #   alternatives:
+      #     - WALK
+
+CONSTANTS:
+  parkLocation1TAZ: 1  # terminal, park on airport, need to adjust ASCs if changing with other parkLocationTAZs
+  parkLocation2TAZ: 55  # wallypark
+  parkLocation3TAZ: 8  # Master Park / Extra Car
+  parkLocation4TAZ: -999
+  parkLocation5TAZ: -999
+  parkEscortLocationTAZ: 6
+  rentalLocationTAZ: 9
+  terminalTAZ: 1
+  centralMobilityHubTAZ: -999
+  ridehailLocation1TAZ: 3
+  ridehailLocation2TAZ: -999
+  transitTAZ: 1
+  curbLocation1TAZ: 5  # drop off, if changing need to update availability condition on direction
+  curbLocation2TAZ: 2  # pick up, if changing need to update availability condition on direction
+  curbLocation3TAZ: -999
+  curbLocation4TAZ: -999
+  curbLocation5TAZ: -999
+  shuttleVanTAZ: 3
+  hotelCourtesyTAZ: 3
+  parkLocation1AccessCost: 0.00
+  parkLocation1CostDay: 39.04
+  parkLocation1InVehicleTime: 0.00
+  parkLocation1WalkTime: 5.00
+  parkLocation1WaitTime: 0.00
+  parkLocation2AccessCost: 0.00
+  parkLocation2CostDay: 25.62
+  parkLocation2InVehicleTime: 6.0
+  parkLocation2WalkTime: 2.0
+  parkLocation2WaitTime: 3.0
+  parkLocation3AccessCost: 0.00
+  parkLocation3CostDay: 17.99  # Master Park low rate
+  parkLocation3InVehicleTime: 10.0  #asserted
+  parkLocation3WalkTime: 2.00 # asserted
+  parkLocation3WaitTime: 3.00 # asserted
+  parkLocation4AccessCost: 0.00
+  parkLocation4CostDay: 999.0
+  parkLocation4InVehicleTime: 999.0
+  parkLocation4WalkTime: 999.0
+  parkLocation4WaitTime: 999.0
+  parkLocation5AccessCost: 999.0
+  parkLocation5CostDay: 999.0
+  parkLocation5InVehicleTime: 999.0
+  parkLocation5WalkTime: 999.0
+  parkLocation5WaitTime: 999.0
+  parkEscortAccessCost: 0.00
+  parkEscortCostHour: 7.32
+  parkEscortInVehicleTime: 0.00
+  parkEscortWalkTime: 5.00
+  parkEscortWaitTime: 0.00
+  rentalCarAccessCost: 0.00
+  rentalCostPerDay: 60.99
+  rentalCarInVehicleTime: 0.00
+  rentalCarWalkTime: 0.00
+  rentalCarWaitTime: 0.00
+  # terminalWalkTime: 5.00
+  # terminalWaitTime: 0.00
+  ridehailCostInitial: 1.78
+  ridehailCostPerMile: 1.08
+  ridehailCostPerMinute: 0.19
+  ridehailCostMinimum: 5.84
+  ridehailWaitTime: 4.10
+  ridehailLocation1AccessWalkTime: 5.00
+  ridehailLocation2AccessWalkTime: 999.0
+  taxiCostInitial: 2.60 # from https://seattleyellowcab.com/rates/
+  taxiCostPerMile: 2.70
+  taxiCostPerMinute: 0.50
+  taxiCostMinimum: 0
+  taxiWaitTime: 2.00
+  taxiLocation1AccessWalkTime:  5.00
+  taxiLocation2AccessWalkTime: 999.0
+  curbLocation1InVehicleTime: 0.00
+  curbLocation1WalkTime: 5.00
+  curbLocation1WaitTime: 0.00
+  curbLocation2InVehicleTime: 0.00
+  curbLocation2WalkTime: 5.00
+  curbLocation2WaitTime: 0.00
+  curbLocation3InVehicleTime: 999.0
+  curbLocation3WalkTime: 999.0
+  curbLocation3WaitTime: 999.0
+  curbLocation4InVehicleTime: 999.0
+  curbLocation4WalkTime: 999.0
+  curbLocation4WaitTime: 999.0
+  curbLocation5InVehicleTime: 999.0
+  curbLocation5WalkTime: 999.0
+  curbLocation5WaitTime: 999.0
+  hotelCourtesyWalkTime: 5.00
+  hotelCourtesyWaitTime: 10.00
+  shuttleVanWalkTime: 5.00
+  shuttleVanWaitTime: 10.00
+  vot_threshold_low: 14.32
+  vot_threshold_med: 26.64
+  costPerMile: 0.50
+  eaperiod: 11
+  amperiod: 17
+  mdperiod: 30
+  pmperiod: 37
+  evperiod: 48
+  aux_walk_time_multiplier: 1.7
+  initial_wait_time_multiplier: 1.5
+  transfer_wait_time_multiplier: 2
+  ivt_lr_multiplier: 0.75
+  ivt_cr_multiplier: 0.65
+  ivt_fr_multiplier: 0.6
+  ivt_fp_multiplier: 0.6
+
+
+# so far, we can use the same spec as for non-joint tours
+preprocessor:
+  SPEC: trip_mode_choice_annotate_trips_preprocessor
+  DF: df
+  TABLES:
+    - land_use
+
+annotate_trips:
+  SPEC: trip_mode_choice_annotate_trips
+  DF: df
+
+CHOOSER_COLS_TO_KEEP:
+  - vot1
+  - vot2
+  - vot3
+  - walk_bus_aux
+  - walk_lrail_aux
+  - walk_crail_aux
+  - walk_ferry_aux
+  - walk_pferry_aux
+  - partySizeRideHailLocation1AutoDist
+  - partySizeRideHailLocation2AutoDist
+
+# to reduce memory needs filter chooser table to these fields
+TOURS_MERGED_CHOOSER_COLUMNS:
+  - hhsize
+  - age
+  - num_adults
+  - auto_ownership
+  - number_of_participants
+  - tour_category
+  - parent_tour_id
+  - tour_type
+  - purpose_id
+  - income
+  - nights
+  - tour_mode
+  - mode_segment
+  - emp_trip_mode
+  - party_size
+  # - demographic_segment
+
+MODE_CHOICE_LOGSUM_COLUMN_NAME: mode_choice_logsum

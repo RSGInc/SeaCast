@@ -78,8 +78,8 @@ def airpot_trips_to_emp_parking_lot(hdf_filename):
     random.seed(PARKING_SAMPLE_SEED)
     update_tourids = random.sample(return_tourids.to_list(), num_sample) 
     # Update the origin and destination TAZ to employeed parking lot for identified trips
-    trip_df.loc[(trip_df.tourid.isin(update_tourids)) & (trip_df.dtaz==1) & (trip_df.tmode.isin(auto_mode)) & (trip_df.dpurp.isin(work_purpose)),'dtaz'] = AIPORT_EMP_PARKING_LOT
-    trip_df.loc[(trip_df.tourid.isin(update_tourids)) & (trip_df.otaz==1) & (trip_df.tmode.isin(auto_mode)),'otaz'] = AIPORT_EMP_PARKING_LOT
+    trip_df.loc[(trip_df.tourid.isin(update_tourids)) & (trip_df.dtaz==1) & (trip_df.tmode.isin(auto_mode)) & (trip_df.dpurp.isin(work_purpose)),'dtaz'] = int(AIPORT_EMP_PARKING_LOT)
+    trip_df.loc[(trip_df.tourid.isin(update_tourids)) & (trip_df.otaz==1) & (trip_df.tmode.isin(auto_mode)),'otaz'] = int(AIPORT_EMP_PARKING_LOT)
 
     # Update the daysim output to save the updated origin and destination taz
     del my_store["Trip"]["otaz"]

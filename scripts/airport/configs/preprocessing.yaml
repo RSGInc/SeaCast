@@ -1,0 +1,43 @@
+# input files
+# read from input data directory
+parcel_input_fname: parcels_urbansim.txt
+
+# read from configs folder
+employee_park_fname: airport_employee_park.csv
+arrival_sched_probs_fname: airport_arrival.csv
+departure_sched_probs_fname: airport_departure.csv
+purpose_probs_input_fname: airport_purpose.csv
+party_size_probs_input_fname: airport_party.csv
+nights_probs_input_fname: airport_nights.csv
+income_probs_input_fname: airport_income.csv
+ext_station_probs_input_fname: airport_externals.csv
+
+
+hdf5_syn_pop_file: .\inputs\scenario\landuse\hh_and_persons.h5
+TAZ_index_file: .\inputs\scenario\networks\TAZIndex.txt
+
+# skim settings
+hdf5_skim_folder: .\inputs\model\roster
+files_to_time_period:
+  7to8: 'AM'
+  5to6: 'EA'
+  10to14: 'MD'
+  17to18: 'PM'
+  18to20: 'EV'
+
+# output files
+sched_probs_output_name: tour_scheduling_probs.csv
+households_output_fname: households_airport.csv
+persons_output_fname: persons_airport.csv
+tours_output_fname: tours_airport.csv
+taz_output_fname: land_use.csv
+tour_scheduling_probs_output_fname: tour_scheduling_probs.csv
+
+# parameters
+tours:
+  num_enplanements: 24894338
+  avg_party_size: 1.7
+  annualization_factor: 365
+  connecting:  7184927 
+  airport_TAZ: 1
+  airport_employee_TAZ: 4

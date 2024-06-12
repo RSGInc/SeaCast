@@ -191,6 +191,26 @@ def clean_up():
         else:
             print(file)
 
+@timed          
+def clean_up_daysim_output():
+    delete_files = ['outputs\\daysim\\daysim_outputs.h5']
+
+    for file in delete_files: 
+        if(os.path.isfile(os.path.join(os.getcwd(), file))):
+            os.remove(os.path.join(os.getcwd(), file))
+        else:
+            print(file)
+
+@timed          
+def clean_up_shadow_prices():
+    delete_files = ['working\\shadow_prices.txt', 'working\\park_and_ride_shadow_prices.txt']
+
+    for file in delete_files: 
+        if(os.path.isfile(os.path.join(os.getcwd(), file))):
+            os.remove(os.path.join(os.getcwd(), file))
+        else:
+            print(file)
+
 @timed
 def copy_accessibility_files():
     if run_integrated:
