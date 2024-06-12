@@ -61,7 +61,7 @@ county_lookup = {
     33: 'King',
     35: 'Kitsap',
     53: 'Pierce',
-    61: 'Snohomish'	
+    61: 'Snohomish'
     }
 
 tod_lookup = {  0:'20to5',
@@ -194,14 +194,27 @@ def main():
     df_daily.rename(columns={'@tveh': 'modeled','vehicles': 'observed','@subarea_flag':'subarea_flag'}, inplace=True)
     df_daily['diff'] = df_daily['modeled']-df_daily['observed']
     df_daily['perc_diff'] = df_daily['diff']/df_daily['observed']
-    df_daily[['modeled','observed']] = df_daily[['modeled','observed']].astype('int')
+    df_daily[['modeled','observed']] = df_daily[['modeled','observed']]
     df_daily['county'] = df_daily['countyid'].map(county_lookup)
     df_daily.to_csv(os.path.join(validation_output_dir,'daily_volume.csv'), 
                         index=False, columns=['@countid','@countid','county', 'subarea_flag','@facilitytype','modeled','observed','diff','perc_diff'])
 
     # Counts by county and facility type
-    df_county_facility_counts = df_daily.groupby(['county','@facilitytype','subarea_flag']).sum()[['observed','modeled']].reset_index()
+    df_county_facility_counts = df_daily.groupby(['county','@facilitytype','subarea_flag'])[['observed','modeled']].sum().reset_index()
     df_county_facility_counts.to_csv(os.path.join(validation_output_dir,'daily_volume_county_facility.csv'))
+
+    # Model results by volume
+    df_daily_volume = model_vol_df.groupby(['@countid', 'ij']).agg({'@tveh':'sum', '@facilitytype': 'first', '@subarea_flag':'first'}).reset_index()
+    df_daily_volume = df_daily_volume[df_daily_volume['@countid']>0].groupby(['@countid']).agg({'@tveh':'sum', '@facilitytype': 'first', '@subarea_flag':['first','count']}).reset_index()
+    df_daily_volume.columns = df_daily_volume.columns.map('_'.join)
+    df_daily_volume = df_daily_volume.merge(daily_counts, left_on='@countid_', right_on='flag')
+    volume_bins = [0, 10000, 25000, 50000, 100000, 999999999]
+    df_daily_volume['volbin'] = pd.cut(df_daily_volume['@tveh_sum'],volume_bins, right=False, labels=False)
+    # df_daily_volume = df_daily_volume.groupby(['volbin','@subarea_flag_first']).agg({'@tveh_sum':'sum', 'vehicles':'sum', '@subarea_flag_count':'sum'}).reset_index()
+    df_daily_volume = df_daily_volume[['@countid_', 'volbin', '@subarea_flag_first', '@tveh_sum', 'vehicles', '@subarea_flag_count']]
+    df_daily_volume.columns = ['countid', 'volbin', 'subarea_flag', 'modeled', 'observed', 'nlinks']
+    
+    df_daily_volume.to_csv(os.path.join(validation_output_dir,'daily_volume_by_flow.csv'), index=False)
 
     # hourly counts
     # Create Time of Day (TOD) column based on start hour, group by TOD
@@ -211,8 +224,7 @@ def main():
 
     # Account for bi-directional links or links that include HOV volumes
     hr_model = model_vol_df.groupby(['@countid','tod']).agg({'@tveh':'sum','@facilitytype':'first',
-                                                  '@countyid':'first','i_node':'first',
-                                                  'j_node':'first','auto_time':'first',
+                                                  '@countyid':'first','auto_time':'first',
                                                   'type':'first', '@subarea_flag':'first'}).reset_index()
 
     # Join by time of day and flag ID
