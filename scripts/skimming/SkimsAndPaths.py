@@ -24,6 +24,7 @@ sys.path.append(os.getcwd())
 from emme_configuration import *
 from EmmeProject import *
 from data_wrangling import text_to_dictionary, json_to_dictionary
+import openmatrix as omx
 
 #Create a logging file to report model progress
 logging.basicConfig(filename=log_file_name, level=logging.DEBUG)
@@ -638,7 +639,7 @@ def hdf5_trips_to_Emme(my_project, hdf_filename):
     pathtype = pathtype.astype('int')
     pathtype = pathtype[tod_index]
 
-    my_store.close
+    my_store.close()
 
     # create & store in-memory numpy matrices in a dictionary. Key is matrix name, value is the matrix
     demand_matrices={}
@@ -656,7 +657,7 @@ def hdf5_trips_to_Emme(my_project, hdf_filename):
     # Create empty demand matrices for other modes without supplemental trips
     for matrix in list(uniqueMatrices):
         if matrix not in demand_matrices.keys():
-            demand_matrix = np.zeros((zonesDim,zonesDim), np.float16)
+            demand_matrix = np.zeros((zonesDim,zonesDim), np.float32)
             demand_matrices.update({matrix : demand_matrix})
 
     # Start going through each trip & assign it to the correct Matrix. Using Otaz, but array length should be same for all
@@ -718,8 +719,31 @@ def hdf5_trips_to_Emme(my_project, hdf_filename):
             # dorp==3 for primary trips in AVs, include these along with driver trips (dorp==1)
             elif (dorp[x] <= 1 or dorp[x] == 3) or (mode[x] in non_auto_mode_ids):
                 demand_matrices[mat_name][myOtaz, myDtaz] = demand_matrices[mat_name][myOtaz, myDtaz] + trips
-  
-  #all in-memory numpy matrices populated, now write out to emme
+    
+    
+    # Add airport trips
+    airport_filename = os.path.join(airport_output_dir, 'airport_demand_' + my_project.tod+'.omx')
+    logging.debug('Adding airport trips from airport_demand_{}.omx'.format(my_project.tod))
+    omx_file = omx.open_file(airport_filename, 'r')
+
+    transit_mapping = {'walk_bus': 'trnst', 'walk_cr': 'commuter_rail', \
+                'walk_fp': 'passenger_ferry', 'walk_fr': 'ferry', 'walk_lr': 'litrat'}
+    
+    for mat_name in omx_file.list_matrices():
+        airport_trips = np.array(omx_file[mat_name], dtype=np.float32)
+        if mat_name in transit_mapping.keys():
+            # print('Before Sum {}: Demand: {}, Airport {}'.format(mat_name ,demand_matrices[transit_mapping[mat_name]].sum(), airport_trips.sum()))
+            demand_matrices[transit_mapping[mat_name]] = demand_matrices[transit_mapping[mat_name]]+airport_trips
+            # print('After Sum {}: Demand: {}'.format(mat_name ,demand_matrices[transit_mapping[mat_name]].sum(), ))
+        else:
+            # print('Before Sum {}: Demand: {}, Airport {}'.format(mat_name , demand_matrices[mat_name].sum(), airport_trips.sum()))
+            demand_matrices[mat_name] = demand_matrices[mat_name] +airport_trips
+            # print('After Sum {}: Demand: {}'.format(mat_name , demand_matrices[mat_name].sum(), ))
+
+    omx_file.close()
+    logging.debug('Finished adding airport trips from airport_demand_{}.omx'.format(my_project.tod))
+
+    #all in-memory numpy matrices populated, now write out to emme
     for mat_name in uniqueMatrices:
         matrix_id = my_project.bank.matrix(str(mat_name)).id
         np_array = demand_matrices[mat_name]
@@ -750,7 +774,7 @@ def load_trucks(my_project, matrix_name, zonesDim):
     aggregate_time_period = time_dictionary[tod]['TripBasedTime']
     truck_demand_matrix_name = 'mf' + aggregate_time_period + '_' + truck_matrix_name_dict[matrix_name]
 
-    np_matrix = np.matrix(hdf_file[aggregate_time_period][truck_demand_matrix_name]).astype(float)
+    np_matrix = np.matrix(hdf_file[aggregate_time_period][truck_demand_matrix_name]).astype(np.float32)
 
     # Apply time of day factor to convert from aggregate time periods to 12 soundcast periods
     sub_demand_matrix = np_matrix[0:zonesDim, 0:zonesDim]
@@ -766,7 +790,7 @@ def load_supplemental_trips(my_project, matrix_name, zonesDim):
 
     tod = my_project.tod
     # Create empty array to fill with trips
-    demand_matrix = np.zeros((zonesDim,zonesDim), np.float16)
+    demand_matrix = np.zeros((zonesDim,zonesDim), np.float32)
     hdf_file = h5py.File(os.path.join(supplemental_output_dir,tod + '.h5'), "r")
 
     # Open mode-specific array for this TOD and mode

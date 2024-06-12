@@ -24,6 +24,7 @@ run_import_networks = True
 run_skims_and_paths_free_flow = True
 run_skims_and_paths = True
 run_truck_model = True
+run_airport_model = True
 run_supplemental_trips = True
 run_daysim = True
 run_daysim_popsampler = True

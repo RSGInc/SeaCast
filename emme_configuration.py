@@ -26,8 +26,21 @@ MAX_EXTERNAL = 3750      #zone of externals (subtract 1 because numpy is zero-ba
 HIGH_TAZ = 2970
 LOW_PNR = 3751
 HIGH_PNR = 4000
-SEATAC = 1
+SEATAC = 1                  # Zone number for airport terminal
+AIPORT_EMP_PARKING_LOT = 28 # Zone number for airport employee parking lot
 EXTERNALS_DONT_GROW=[3733]
+
+#################################
+# DaySim Airport Trip
+#################################
+PARKING_SAMPLE_SEED = 1212
+PARKING_ZONE_SAMPLE_RATE = 0.7
+
+#################################
+# Airport Model Settings
+#################################
+
+airport_output_dir = 'outputs/airport'
 
 #####################################
 # Network Import Settings
@@ -55,7 +68,7 @@ extra_attributes_dict = {'@tveh' : 'total vehicles',
 unit_of_length = 'mi'    # units of miles in Emme
 rdly_factor = .25
 coord_unit_length = 0.0001894    # network links measured in feet, converted to miles (1/5280)
-main_log_file = 'soundcast_log.txt'
+main_log_file = 'seacast_log.txt'
 
 link_extra_attributes = ['@facilitytype', '@countyid', '@countid', '@corridorid', '@is_managed','@bkfac','@upslp', '@toll1', '@toll2', '@toll3', '@trkc1', '@trkc2', '@trkc3', '@fgts', '@ttf', '@subarea_flag'] 
 node_extra_attributes = ['@lr_walk','@hdwfr','@wait','@invt']

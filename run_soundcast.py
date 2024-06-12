@@ -174,11 +174,22 @@ def daysim_assignment(iteration):
         logger.info("End of %s iteration of Daysim", str(iteration))
         if returncode != 0:
             sys.exit(1)
+        logger.info("Start of %s update Daysim airport work trip", str(iteration))
+        returncode = subprocess.call([sys.executable, 'scripts/skimming/daysim_update.py'])
+        logger.info("End of %s update Daysim airport work trip", str(iteration))
+        if returncode != 0:
+            sys.exit(1)
 
     ########################################
     # Calcualte Trucks and Supplemental Demand
     ########################################
     run_truck_supplemental(iteration)
+
+    ########################################
+    # Calcualte Airport Demand
+    ########################################
+    if run_airport_model:
+        run_airport()
 
     ########################################
     # Assign Demand to Networks
@@ -279,6 +290,47 @@ def run_all_summaries():
         print(script)
         subprocess.call([sys.executable, os.path.join(base_path, script+'.py')])
     subprocess.run('activate seatac_summary && python scripts/summarize/standard/write_html.py && deactivate', shell=True)
+
+@timed
+def run_airport():
+    base_path = os.path.join('scripts','airport')
+
+    # Run the airport preprocessor
+    logger.info("Start of airport preprocessor")
+    call_string = 'activate seatac_airport && python {} -c {} -d {} -o {} -s && deactivate'.format(
+        os.path.join(base_path, 'airport_preprocessor.py'),
+        os.path.join(base_path, 'configs'),
+        os.path.join('inputs', 'scenario', 'landuse'),
+        os.path.join(base_path, 'configs')
+    )
+    captured_output = subprocess.run(call_string, shell=True)
+    # returncode = subprocess.call([sys.executable, os.path.join(base_path, 'airport_preprocessor.py'),
+    #                               '-c', os.path.join(base_path, 'configs'),
+    #                               '-d', os.path.join('inputs', 'scenario', 'landuse'), 
+    #                               '-o', os.path.join(base_path, 'configs'), 
+    #                               '-s'])
+    logger.info("End of airport preprocessor")
+    if captured_output.returncode != 0:
+        sys.exit(1)
+    
+    # Run the airport model
+    logger.info("Start of airport model")
+    call_string = 'activate seatac_airport && python {} -c {} -c {} -d {} -o {} && deactivate'.format(
+        os.path.join(base_path, 'simulation.py'),
+        os.path.join(base_path, 'configs'),
+        os.path.join(base_path, 'configs_airport'),
+        os.path.join(base_path, 'configs'),
+        os.path.join('outputs', 'airport')
+    )
+    captured_output = subprocess.run(call_string, shell=True)
+    # subprocess.call([sys.executable, os.path.join(base_path, 'simulation.py'), 
+    #                  '-c', os.path.join(base_path, 'configs'), 
+    #                  '-c', os.path.join(base_path, 'configs_airport'), 
+    #                  '-d', os.path.join(base_path, 'configs'), 
+    #                  '-o', os.path.join('outputs', 'airport')])
+    logger.info("End of airport model")
+    if captured_output.returncode != 0:
+        sys.exit(1)
 
 def main():
 
