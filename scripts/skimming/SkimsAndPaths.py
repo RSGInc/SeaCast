@@ -209,6 +209,10 @@ def intitial_extra_attributes(my_project):
     # Create the link extra attributes to store volume results
     for x in range (0, len(matrix_dict["Highway"])):
         my_project.create_extra_attribute("LINK", "@"+matrix_dict["Highway"][x]["Name"], matrix_dict["Highway"][x]["Description"], True)
+    
+    # Create the turn extra attributes to store volume results
+    for x in range (0, len(matrix_dict["Highway"])):
+        my_project.create_extra_attribute("TURN", "@p"+matrix_dict["Highway"][x]["Name"], matrix_dict["Highway"][x]["Description"], True)
                      
     # Create the link extra attributes to store the auto equivalent of bus vehicles
     my_project.create_extra_attribute("LINK", "@trnv3", "Transit Vehicles",True)
@@ -419,6 +423,7 @@ def class_specific_volumes(my_project):
     mod_skim = skim_specification
     for x in range (0, len(mod_skim["classes"])):
         mod_skim["classes"][x]["results"]["link_volumes"] = "@"+my_user_classes["Highway"][x]["Name"]
+        mod_skim["classes"][x]["results"]["turn_volumes"] = "@p"+my_user_classes["Highway"][x]["Name"]
     skim_traffic(mod_skim)
 
     end_vol_skim = time.time()
