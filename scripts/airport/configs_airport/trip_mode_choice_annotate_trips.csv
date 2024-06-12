@@ -15,8 +15,6 @@ Description,Target,Expression
 ,_destination,"np.where((df.trip_mode == 'TAXI_LOC2') & (df.outbound == False), ridehailLocation2TAZ, _destination)"
 ,_destination,"np.where((df.trip_mode == 'CURB_LOC1') & (df.outbound == False), curbLocation1TAZ, _destination)"
 ,_destination,"np.where((df.trip_mode == 'CURB_LOC2') & (df.outbound == False), curbLocation2TAZ, _destination)"
-,curb_eval_test,"np.where((df.trip_mode == 'CURB_LOC2') & (df.outbound == False), 1, 0)"
-,curb_location_test,curbLocation2TAZ
 ,_destination,"np.where((df.trip_mode == 'CURB_LOC3') & (df.outbound == False), curbLocation3TAZ, _destination)"
 ,_destination,"np.where((df.trip_mode == 'CURB_LOC4') & (df.outbound == False), curbLocation4TAZ, _destination)"
 ,_destination,"np.where((df.trip_mode == 'CURB_LOC5') & (df.outbound == False), curbLocation5TAZ, _destination)"

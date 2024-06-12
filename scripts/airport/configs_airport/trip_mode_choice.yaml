@@ -71,10 +71,10 @@ NESTS:
 
 CONSTANTS:
   parkLocation1TAZ: 1  # terminal, park on airport, need to adjust ASCs if changing with other parkLocationTAZs
-  parkLocation2TAZ: 55  # wallypark
-  parkLocation3TAZ: 8  # Master Park / Extra Car
-  parkLocation4TAZ: -999
-  parkLocation5TAZ: -999
+  parkLocation2TAZ: 55  # wallypark outdoor, park & fly
+  parkLocation3TAZ: 8  # Master Park, Extra Car, Doug Fog, represents all parking north of airport
+  parkLocation4TAZ: 64  # wallypark garage, Star Parking, Jiffy Airport Parking
+  parkLocation5TAZ: 93  # SeaTacPark, etc.
   parkEscortLocationTAZ: 6
   rentalLocationTAZ: 9
   terminalTAZ: 1
@@ -96,24 +96,25 @@ CONSTANTS:
   parkLocation1WaitTime: 0.00
   parkLocation2AccessCost: 0.00
   parkLocation2CostDay: 25.62
-  parkLocation2InVehicleTime: 6.0
+  parkLocation2InVehicleTime: 3.0
   parkLocation2WalkTime: 2.0
   parkLocation2WaitTime: 3.0
+  # below parkLocation rates based on Master Park low rate.  Times asserted
   parkLocation3AccessCost: 0.00
-  parkLocation3CostDay: 17.99  # Master Park low rate
-  parkLocation3InVehicleTime: 10.0  #asserted
-  parkLocation3WalkTime: 2.00 # asserted
-  parkLocation3WaitTime: 3.00 # asserted
+  parkLocation3CostDay: 17.99
+  parkLocation3InVehicleTime: 10.0
+  parkLocation3WalkTime: 2.00
+  parkLocation3WaitTime: 3.00
   parkLocation4AccessCost: 0.00
-  parkLocation4CostDay: 999.0
-  parkLocation4InVehicleTime: 999.0
-  parkLocation4WalkTime: 999.0
-  parkLocation4WaitTime: 999.0
-  parkLocation5AccessCost: 999.0
-  parkLocation5CostDay: 999.0
-  parkLocation5InVehicleTime: 999.0
-  parkLocation5WalkTime: 999.0
-  parkLocation5WaitTime: 999.0
+  parkLocation4CostDay: 17.99
+  parkLocation4InVehicleTime: 5.0
+  parkLocation4WalkTime: 2.00
+  parkLocation4WaitTime: 3.00
+  parkLocation5AccessCost: 0.00
+  parkLocation5CostDay: 17.99
+  parkLocation5InVehicleTime: 10.0
+  parkLocation5WalkTime: 2.00
+  parkLocation5WaitTime: 3.00
   parkEscortAccessCost: 0.00
   parkEscortCostHour: 7.32
   parkEscortInVehicleTime: 0.00
