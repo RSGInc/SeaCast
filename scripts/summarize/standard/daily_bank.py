@@ -30,6 +30,7 @@ from emme_configuration import *
 from scripts.EmmeProject import *
 
 daily_network_fname = 'outputs/network/daily_network_results.csv'
+daily_network_turn_fname = 'outputs/network/daily_network_turn_results.csv'
 keep_atts = ['@type']
 
 def json_to_dictionary(dict_name):
@@ -88,6 +89,10 @@ def merge_networks(master_network, merge_network):
     for link in merge_network.links():
         if not master_network.link(link.i_node, link.j_node):
             master_network.create_link(link.i_node, link.j_node, link.modes)
+      
+    # for turn in merge_network.turns():
+    #     if not master_network.turn(turn.i_node, turn.j_node, turn.k_node):
+    #         master_network.create_intersection(turn.j_node)
 
     return master_network
 
@@ -122,6 +127,72 @@ def export_link_values(my_project):
         os.makedirs(shapefile_dir)
     network_to_shapefile = my_project.m.tool('inro.emme.data.network.export_network_as_shapefile')
     network_to_shapefile(export_path=shapefile_dir, scenario=my_project.current_scenario)
+
+def export_link_values(my_project):
+    ''' Extract link attribute values for a given scenario and emmebank (i.e., time period) '''
+
+    network = my_project.current_scenario.get_network()
+    link_type = 'LINK'
+
+    # list of all link attributes
+    link_attr = network.attributes(link_type)
+
+    # Initialize a dataframe to store results
+    df = pd.DataFrame()
+    for attr in link_attr:
+        print("processing: " + str(attr))
+        # store values and node id for a single attr in a temp df 
+        df_attr = pd.DataFrame([network.get_attribute_values(link_type, [attr])[1].keys(),
+                          network.get_attribute_values(link_type, [attr])[1].values()]).T
+        df_attr.columns = ['nodes','value']
+        df_attr['measure'] = str(attr)
+
+        df = df.append(df_attr)
+    
+    # Lengthen tablewise
+    df = df.pivot(index='nodes',columns='measure',values='value').reset_index()
+    df.to_csv(daily_network_fname)
+
+    # Export shapefile
+    shapefile_dir = r'outputs/network/shapefile'
+    if not os.path.exists(shapefile_dir):
+        os.makedirs(shapefile_dir)
+    network_to_shapefile = my_project.m.tool('inro.emme.data.network.export_network_as_shapefile')
+    network_to_shapefile(export_path=shapefile_dir, scenario=my_project.current_scenario)
+
+
+def export_turn_values(my_project):
+    ''' Extract turn attribute values for a given scenario and emmebank (i.e., time period) '''
+
+    network = my_project.current_scenario.get_network()
+    turn_type = 'TURN'
+
+    # list of all turn attributes
+    turn_attr = network.attributes(turn_type)
+
+    # Initialize a dataframe to store results
+    df = pd.DataFrame()
+    for attr in turn_attr:
+        print("processing: " + str(attr))
+        # store values and node id for a single attr in a temp df 
+        df_attr = pd.DataFrame([network.get_attribute_values(turn_type, [attr])[1].keys(),
+                          network.get_attribute_values(turn_type, [attr])[1].values()]).T
+        df_attr.columns = ['nodes','value']
+        df_attr['measure'] = str(attr)
+
+        df = df.append(df_attr)
+    
+    # Lengthen tablewise
+    df = df.pivot(index='nodes',columns='measure',values='value').reset_index()
+    df.to_csv(daily_network_turn_fname)
+
+    # # Export shapefile
+    # shapefile_dir = r'outputs/network/shapefile'
+    # if not os.path.exists(shapefile_dir):
+    #     os.makedirs(shapefile_dir)
+    # network_to_shapefile = my_project.m.tool('inro.emme.data.network.export_network_as_shapefile')
+    # network_to_shapefile(export_path=shapefile_dir, scenario=my_project.current_scenario)
+
 
 def main():
 

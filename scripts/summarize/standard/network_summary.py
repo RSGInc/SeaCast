@@ -159,6 +159,39 @@ def jobs_transit(output_path):
 
     df.to_csv(output_path)
 
+def export_network_turn_attributes(network):
+    """ Calculate turn-level results by time-of-day, append to csv """
+
+    _attribute_list = network.attributes('TURN')  
+
+    network_data = {k: [] for k in _attribute_list}
+    i_node_list = []
+    j_node_list = []
+    k_node_list = []
+    # network_data['modes'] = []
+    for turn in network.turns():
+        for colname, array in network_data.items():
+            if colname != 'modes':
+                try:
+                    network_data[colname].append(turn[colname])  
+                except:
+                    network_data[colname].append(0)
+        i_node_list.append(turn.i_node.id)
+        j_node_list.append(turn.j_node.id)
+        k_node_list.append(turn.k_node.id)
+        # network_data['modes'].append(turn.modes)
+
+    network_data['i_node'] = i_node_list
+    network_data['j_node'] = j_node_list
+    network_data['k_node'] = k_node_list
+    df = pd.DataFrame.from_dict(network_data)
+    # df['modes'] = df['modes'].apply(lambda x: ''.join(list([j.id for j in x])))    
+    # df['modes'] = df['modes'].astype('str').fillna('')
+    df['jik'] = df['j_node'].astype('str') + '-' + df['i_node'].astype('str') + '-' + df['k_node'].astype('str')
+   
+    return df
+ 
+
 def export_network_attributes(network):
     """ Calculate link-level results by time-of-day, append to csv """
 
@@ -483,6 +516,7 @@ def main():
     df_transit_segment = pd.DataFrame()
     df_transit_transfers = pd.DataFrame()
     network_df = pd.DataFrame()
+    network_turn_df = pd.DataFrame()
     df_iz_vol = pd.DataFrame()
     df_iz_vol['taz'] = dictZoneLookup.values()
     
@@ -558,7 +592,15 @@ def main():
         _network_df['tod'] = my_project.tod
         network_df = network_df.append(_network_df)
 
-    output_dict = {network_results_path: network_df, iz_vol_path: df_iz_vol,
+        # Export link-level results for multiple attributes
+        network = my_project.current_scenario.get_network()
+        _network_df = export_network_turn_attributes(network)
+        _network_df['tod'] = my_project.tod
+        network_turn_df = network_turn_df.append(_network_df)
+
+    output_dict = {network_results_path: network_df, 
+                   network_turn_results_path: network_turn_df,
+                   iz_vol_path: df_iz_vol,
                     transit_line_path: df_transit_line,
                     transit_node_path: df_transit_node,
                     transit_segment_path: df_transit_segment}

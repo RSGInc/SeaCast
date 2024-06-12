@@ -1,6 +1,7 @@
 #################################### NETWORK SUMMARY ####################################
 
 network_results_path = r'outputs/network/network_results.csv'
+network_turn_results_path = r'outputs/network/network_turn_results.csv'
 iz_vol_path = r'outputs/network/iz_vol.csv'
 transit_line_path = r'outputs/transit/transit_line_results.csv'
 transit_node_path = r'outputs/transit/transit_node_results.csv'
