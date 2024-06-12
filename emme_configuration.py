@@ -66,7 +66,7 @@ extra_attributes_dict = {'@tveh' : 'total vehicles',
                          '@bveh' : 'number of buses'}
                          
 unit_of_length = 'mi'    # units of miles in Emme
-rdly_factor = .25
+rdly_factor = .5
 coord_unit_length = 0.0001894    # network links measured in feet, converted to miles (1/5280)
 main_log_file = 'seacast_log.txt'
 
