@@ -48,6 +48,12 @@ add_distance_pricing = False
 distance_rate_dict = {'md': 8.5, 'ev': 8.5, 'am': 13.5, 'ni': 8.5, 'pm': 13.5}
 
 ##############################
+# Airport Model Parameters
+##############################
+num_enplanements =24894338
+connecting = 7184927
+
+##############################
 # Household Sampling Controls
 ##############################
 households_persons_file = r'inputs\scenario\landuse\hh_and_persons.h5'
