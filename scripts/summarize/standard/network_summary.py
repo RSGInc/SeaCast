@@ -276,7 +276,13 @@ def summarize_network(df, writer):
         _df.to_excel(writer, sheet_name=metric+' by FC')
         _df.to_csv(r'outputs/network/' + metric.lower() +'_facility.csv', index=False)
 
-    # Totals by user classification
+    # Totals by functional classification and subarea
+    for metric in ['VMT','VHT','delay']:
+        _df = pd.pivot_table(df, values=metric, index=['tod','period', '@subarea_flag', '@concurrency', '@truck_route'],columns='facility_type', aggfunc='sum').reset_index()
+        _df = sort_df(df=_df, sort_list=tods , sort_column='tod')
+        _df = _df.reset_index(drop=True)
+        _df.to_excel(writer, sheet_name=metric+' by FC Subarea')
+        _df.to_csv(r'outputs/network/' + metric.lower() +'_subarea_facility.csv', index=False)
 
     # Update uc_list based on inclusion of TNC and AVs
     new_uc_list = []

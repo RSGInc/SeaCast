@@ -70,7 +70,7 @@ rdly_factor = .5
 coord_unit_length = 0.0001894    # network links measured in feet, converted to miles (1/5280)
 main_log_file = 'seacast_log.txt'
 
-link_extra_attributes = ['@facilitytype', '@countyid', '@countid', '@corridorid', '@is_managed','@bkfac','@upslp', '@toll1', '@toll2', '@toll3', '@trkc1', '@trkc2', '@trkc3', '@fgts', '@ttf', '@subarea_flag'] 
+link_extra_attributes = ['@facilitytype', '@countyid', '@countid', '@corridorid', '@is_managed','@bkfac','@upslp', '@toll1', '@toll2', '@toll3', '@trkc1', '@trkc2', '@trkc3', '@fgts', '@ttf', '@subarea_flag', '@concurrency', '@truck_route'] 
 node_extra_attributes = ['@lr_walk','@hdwfr','@wait','@invt']
 transit_line_extra_attributes = ['@transittype']
 
