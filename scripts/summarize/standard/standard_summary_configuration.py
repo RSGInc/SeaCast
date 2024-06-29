@@ -22,7 +22,7 @@ attribute_list = ['auto_volume','data1','data2','data3','type',
 'type','num_lanes','volume_delay_func','@countyid']
 
 
-transit_extra_attributes_dict = {'@board' : 'total boardings', '@timtr' : 'transit line time'}
+transit_extra_attributes_dict = {'@board' : 'total boardings', '@timtr' : 'transit line time', '@length': 'transit line length'}
 
 income_bins = [-9999,25000,100000,9999999999]
 income_bin_labels = ['low','medium','high']

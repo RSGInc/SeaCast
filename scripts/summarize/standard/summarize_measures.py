@@ -1,8 +1,6 @@
 # Validation for observed data
 
 import os, sys, shutil
-# CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
-# sys.path.append(os.path.dirname(CURRENT_DIR))
 sys.path.append(os.path.join(os.getcwd(),"inputs"))
 sys.path.append(os.path.join(os.getcwd(),"scripts"))
 sys.path.append(os.getcwd())
@@ -28,7 +26,6 @@ from emme_configuration import sound_cast_net_dict, MIN_EXTERNAL, MAX_EXTERNAL
 
 # output directory
 measure_output_dir = 'outputs/performance_measures'
-performance_xwalk = 'inputs/model/lookup/performance_crosswalk.csv'
 
 # Create a clean output directory
 if os.path.exists(measure_output_dir):
@@ -141,15 +138,105 @@ def reindex(series1, series2):
                   how="left")
     return df.right
 
+def calc_resident_measures(trip_df, zone_label = 'SeaTacResident'):
+    performance_measures = {}
+    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents
+    # Auto Trip
+    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df[zone_label] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork']
+    performance_measures['auto_trip_length_work_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df[zone_label] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork']
+    performance_measures['auto_trip_time_work_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # TransitTrip
+    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df[zone_label] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork']
+    performance_measures['transit_trip_length_work_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df[zone_label] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork']
+    performance_measures['transit_trip_time_work_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+
+    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are transit dependent
+    # Auto Trip
+    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df[zone_label] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['TransitDependent']
+    performance_measures['auto_trip_length_work_transit_dependent_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df[zone_label] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
+    performance_measures['auto_trip_time_work_transit_dependent_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # TransitTrip
+    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df[zone_label] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
+    performance_measures['transit_trip_length_work_transit_dependent_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df[zone_label] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
+    performance_measures['transit_trip_time_work_transit_dependent_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+
+    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are low income
+    # Auto Trip
+    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df[zone_label] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['LowIncome']
+    performance_measures['auto_trip_length_work_lowinc_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df[zone_label] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
+    performance_measures['auto_trip_time_work_lowinc_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # TransitTrip
+    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df[zone_label] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
+    performance_measures['transit_trip_length_work_lowinc_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df[zone_label] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
+    performance_measures['transit_trip_time_work_lowinc_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+
+    # # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are minority
+    # # Auto Trip
+    # trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df[zone_label] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['Minority']
+    # performance_measures['auto_trip_length_work_minority_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    # trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df[zone_label] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
+    # performance_measures['auto_trip_time_work_minority_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # # TransitTrip
+    # trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df[zone_label] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
+    # performance_measures['transit_trip_length_work_minority_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    # trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df[zone_label] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
+    # performance_measures['transit_trip_time_work_minority_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+
+    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac employees
+    # Auto Trip
+    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['SeaTacEmployee'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df[zone_label]
+    performance_measures['auto_trip_length_work_employees'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['SeaTacEmployee'] * trip_df['travtime'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df[zone_label]
+    performance_measures['auto_trip_time_work_employees'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # TransitTrip
+    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['SeaTacEmployee'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork']  * trip_df[zone_label]
+    performance_measures['transit_trip_length_work_employees'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['SeaTacEmployee'] * trip_df['travtime'] * trip_df['trexpfac'] * trip_df['PurposeWork']  * trip_df[zone_label]
+    performance_measures['transit_trip_time_work_employees'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+
+    
+
+    # Average transit and auto trip lengths (miles) and travel times (minutes) to shop for all
+    # Auto Trip
+    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeShop'] * trip_df[zone_label]
+    performance_measures['auto_trip_length_shop_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeShop'] * trip_df[zone_label]
+    performance_measures['auto_trip_time_shop_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # TransitTrip
+    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeShop'] * trip_df[zone_label]
+    performance_measures['transit_trip_length_shop_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeShop'] * trip_df[zone_label]
+    performance_measures['transit_trip_time_shop_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+
+    # Average transit and auto trip lengths (miles) and travel times (minutes) to social/recreational for all
+    # Auto Trip
+    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeSocRec'] * trip_df[zone_label]
+    performance_measures['auto_trip_length_socrec_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeSocRec'] * trip_df[zone_label]
+    performance_measures['auto_trip_time_socrec_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # TransitTrip
+    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeSocRec'] * trip_df[zone_label]
+    performance_measures['transit_trip_length_socrec_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeSocRec'] * trip_df[zone_label]
+    performance_measures['transit_trip_time_socrec_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+
+    return performance_measures
+
 
 def main():
 
-    # Get performance measure zones
-    performance_xwalk_df = pd.read_csv(performance_xwalk)
-    corner_store_zones = performance_xwalk_df[~performance_xwalk_df.CS.isna()].TAZ.tolist()
-    nbhd_village_zones = performance_xwalk_df[~performance_xwalk_df.NV.isna()].TAZ.tolist()
-    nbhd_corridor_zones = performance_xwalk_df[~performance_xwalk_df.NC.isna()].TAZ.tolist()
-
+    performance_xwalk = pd.read_csv(os.path.join('inputs', 'model', 'lookup', 'performance_crosswalk.csv'))
+    gc_taz = performance_xwalk[performance_xwalk.GC==1].TAZ.values
+    nv_taz = performance_xwalk[performance_xwalk.NV==1].TAZ.values
+    nc_taz = performance_xwalk[performance_xwalk.NC==1].TAZ.values
+    cs_taz = performance_xwalk[performance_xwalk.CS==1].TAZ.values
+    
     popsim_file_path = 'inputs/model/roster/hh_and_persons_sampled.h5'
     popsim_store = h5py.File(popsim_file_path, "r+")
 
@@ -200,27 +287,45 @@ def main():
         per_dict[set_keys] = np.asarray(per_set[set_keys])
     
     per_df = pd.DataFrame(per_dict)
-    per_df = per_df.merge(popsim_per_df[['hhno', 'pno', 'prace']],how='left',on=['hhno', 'pno'])
+    # per_df = per_df.merge(popsim_per_df[['hhno', 'pno', 'prace']],how='left',on=['hhno', 'pno'])
 
-    hh_df['SeaTacResident'] = np.where(hh_df['hhtaz']<211,1,0)
+    trip_df['parent'] = reindex(tour_df.set_index('id')['parent'],trip_df.tour_id)
+
+    # Identify SeaTac Resident by household taz
+    hh_df['SeaTacResident'] = np.where((hh_df['hhtaz']<211) & (hh_df['hhtaz']>0),1,0)
     per_df['SeaTacResident'] = reindex(hh_df.set_index('hhno')['SeaTacResident'], per_df.hhno)
     tour_df['SeaTacResident'] = reindex(hh_df.set_index('hhno')['SeaTacResident'], tour_df.hhno)
     trip_df['SeaTacResident'] = reindex(hh_df.set_index('hhno')['SeaTacResident'], trip_df.hhno)
 
-    hh_df['CornerStoreResident'] = np.where(hh_df['hhtaz'].isin(corner_store_zones),1,0)
+    # Identify Growth Center Resident by household taz
+    hh_df['GrowthCenterResident'] = np.where((hh_df['hhtaz'].isin(gc_taz)) & (hh_df['hhtaz']>0),1,0)
+    per_df['GrowthCenterResident'] = reindex(hh_df.set_index('hhno')['GrowthCenterResident'], per_df.hhno)
+    tour_df['GrowthCenterResident'] = reindex(hh_df.set_index('hhno')['GrowthCenterResident'], tour_df.hhno)
+    trip_df['GrowthCenterResident'] = reindex(hh_df.set_index('hhno')['GrowthCenterResident'], trip_df.hhno)
+
+    # Identify Neighborhood Village Resident by household taz
+    hh_df['NeighborhoodVillageResident'] = np.where((hh_df['hhtaz'].isin(nv_taz)) & (hh_df['hhtaz']>0),1,0)
+    per_df['NeighborhoodVillageResident'] = reindex(hh_df.set_index('hhno')['NeighborhoodVillageResident'], per_df.hhno)
+    tour_df['NeighborhoodVillageResident'] = reindex(hh_df.set_index('hhno')['GrowthCenterResident'], tour_df.hhno)
+    trip_df['NeighborhoodVillageResident'] = reindex(hh_df.set_index('hhno')['NeighborhoodVillageResident'], trip_df.hhno)
+
+    # Identify Neighborhood Center Resident by household taz
+    hh_df['NeighborhoodCenterResident'] = np.where((hh_df['hhtaz'].isin(nc_taz)) & (hh_df['hhtaz']>0),1,0)
+    per_df['NeighborhoodCenterResident'] = reindex(hh_df.set_index('hhno')['NeighborhoodCenterResident'], per_df.hhno)
+    tour_df['NeighborhoodCenterResident'] = reindex(hh_df.set_index('hhno')['NeighborhoodCenterResident'], tour_df.hhno)
+    trip_df['NeighborhoodCenterResident'] = reindex(hh_df.set_index('hhno')['NeighborhoodCenterResident'], trip_df.hhno)
+
+    # Identify Corner Store Resident by household taz
+    hh_df['CornerStoreResident'] = np.where((hh_df['hhtaz'].isin(cs_taz)) & (hh_df['hhtaz']>0),1,0)
     per_df['CornerStoreResident'] = reindex(hh_df.set_index('hhno')['CornerStoreResident'], per_df.hhno)
     tour_df['CornerStoreResident'] = reindex(hh_df.set_index('hhno')['CornerStoreResident'], tour_df.hhno)
     trip_df['CornerStoreResident'] = reindex(hh_df.set_index('hhno')['CornerStoreResident'], trip_df.hhno)
 
-    hh_df['NbhdVillageResident'] = np.where(hh_df['hhtaz'].isin(nbhd_village_zones),1,0)
-    per_df['NbhdVillageResident'] = reindex(hh_df.set_index('hhno')['NbhdVillageResident'], per_df.hhno)
-    tour_df['NbhdVillageResident'] = reindex(hh_df.set_index('hhno')['NbhdVillageResident'], tour_df.hhno)
-    trip_df['NbhdVillageResident'] = reindex(hh_df.set_index('hhno')['NbhdVillageResident'], trip_df.hhno)
-
-    hh_df['NbhdCorridorResident'] = np.where(hh_df['hhtaz'].isin(nbhd_corridor_zones),1,0)
-    per_df['NbhdCorridorResident'] = reindex(hh_df.set_index('hhno')['NbhdCorridorResident'], per_df.hhno)
-    tour_df['NbhdCorridorResident'] = reindex(hh_df.set_index('hhno')['NbhdCorridorResident'], tour_df.hhno)
-    trip_df['NbhdCorridorResident'] = reindex(hh_df.set_index('hhno')['NbhdCorridorResident'], trip_df.hhno)
+    # Identify SeaTac Employee by work location
+    # per_df['SeaTacEmployee'] = np.where((per_df['pwtaz'] < 211) & (per_df['pwtaz']>0), 1, 0)
+    per_df['SeaTacEmployee'] = np.where((per_df['SeaTacResident'] > 0) & (per_df['pwtyp']>0), 1, 0)
+    tour_df['SeaTacEmployee'] = reindex(per_df.set_index('id')['SeaTacEmployee'], tour_df.person_id)
+    trip_df['SeaTacEmployee'] = reindex(tour_df.set_index('id')['SeaTacEmployee'], trip_df.tour_id)
 
     hh_df['TransitDependent'] = np.where((hh_df['hhftw'] > hh_df['hhvehs']) | (hh_df['hhvehs'] == 0), 1, 0)
     per_df['TransitDependent'] = reindex(hh_df.set_index('hhno')['TransitDependent'], per_df.hhno)
@@ -237,9 +342,9 @@ def main():
     #   5 	Two or More Races non-Hispanic
     #   6 	White Hispanic
     #   7 	Non-white Hispanic
-    per_df['Minority'] = np.where(per_df['prace']>1,1,0)
-    tour_df = tour_df.merge(per_df[['hhno','pno','Minority']], how='left', on=['hhno', 'pno'])
-    trip_df = trip_df.merge(per_df[['hhno','pno','Minority']], how='left', on=['hhno', 'pno'])
+    # per_df['Minority'] = np.where(per_df['prace']>1,1,0)
+    # tour_df = tour_df.merge(per_df[['hhno','pno','Minority']], how='left', on=['hhno', 'pno'])
+    # trip_df = trip_df.merge(per_df[['hhno','pno','Minority']], how='left', on=['hhno', 'pno'])
 
     # Label destination zones as SeaTac zones
     tour_df['SeaTacDestination'] = np.where(tour_df['tdtaz']<211,1,0)
@@ -260,8 +365,6 @@ def main():
     tour_df['TourPurposeWork'] = 0
     tour_df.loc[tour_df.pdpurp.isin(work_purpose),'TourPurposeWork'] = 1
     trip_df['TourPurposeWork'] = reindex(tour_df.set_index('id')['TourPurposeWork'], trip_df.tour_id)
-
-
 
     # Label destination purpose
     trip_df['PurposeWork'] = 0
@@ -286,681 +389,248 @@ def main():
     # Add low income travel
     trip_df['LowIncome'] = np.where(trip_df['vot'] < daysim_lowinc_vot, 1, 0)
 
-    performance_measures = {}
+    # performance_measures = {}
 
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac employees
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['SeaTacDestination'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork']
-    performance_measures['auto_trip_length_work_employees'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['SeaTacDestination'] * trip_df['travtime'] * trip_df['trexpfac'] * trip_df['PurposeWork']
-    performance_measures['auto_trip_time_work_employees'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['SeaTacDestination'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] 
-    performance_measures['transit_trip_length_work_employees'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['SeaTacDestination'] * trip_df['travtime'] * trip_df['trexpfac'] * trip_df['PurposeWork'] 
-    performance_measures['transit_trip_time_work_employees'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+    # # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents
+    # # Auto Trip
+    # trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork']
+    # performance_measures['auto_trip_length_work_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    # trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork']
+    # performance_measures['auto_trip_time_work_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # # TransitTrip
+    # trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork']
+    # performance_measures['transit_trip_length_work_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    # trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork']
+    # performance_measures['transit_trip_time_work_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
 
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork']
-    performance_measures['auto_trip_length_work_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork']
-    performance_measures['auto_trip_time_work_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork']
-    performance_measures['transit_trip_length_work_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork']
-    performance_measures['transit_trip_time_work_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+    # # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac employees
+    # # Auto Trip
+    # trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['SeaTacDestination'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork']
+    # performance_measures['auto_trip_length_work_employees'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    # trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['SeaTacDestination'] * trip_df['travtime'] * trip_df['trexpfac'] * trip_df['PurposeWork']
+    # performance_measures['auto_trip_time_work_employees'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # # TransitTrip
+    # trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['SeaTacDestination'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] 
+    # performance_measures['transit_trip_length_work_employees'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    # trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['SeaTacDestination'] * trip_df['travtime'] * trip_df['trexpfac'] * trip_df['PurposeWork'] 
+    # performance_measures['transit_trip_time_work_employees'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
 
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are transit dependent
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['auto_trip_length_work_transit_dependent_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['auto_trip_time_work_transit_dependent_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['transit_trip_length_work_transit_dependent_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['transit_trip_time_work_transit_dependent_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+    # # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are transit dependent
+    # # Auto Trip
+    # trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['TransitDependent']
+    # performance_measures['auto_trip_length_work_transit_dependent_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    # trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
+    # performance_measures['auto_trip_time_work_transit_dependent_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # # TransitTrip
+    # trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
+    # performance_measures['transit_trip_length_work_transit_dependent_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    # trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
+    # performance_measures['transit_trip_time_work_transit_dependent_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
 
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are low income
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['auto_trip_length_work_lowinc_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['auto_trip_time_work_lowinc_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['transit_trip_length_work_lowinc_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['transit_trip_time_work_lowinc_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+    # # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are low income
+    # # Auto Trip
+    # trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['LowIncome']
+    # performance_measures['auto_trip_length_work_lowinc_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    # trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
+    # performance_measures['auto_trip_time_work_lowinc_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # # TransitTrip
+    # trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
+    # performance_measures['transit_trip_length_work_lowinc_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    # trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
+    # performance_measures['transit_trip_time_work_lowinc_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
 
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are minority
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['auto_trip_length_work_minority_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['auto_trip_time_work_minority_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['transit_trip_length_work_minority_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['transit_trip_time_work_minority_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+    # # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are minority
+    # # Auto Trip
+    # trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['Minority']
+    # performance_measures['auto_trip_length_work_minority_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    # trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
+    # performance_measures['auto_trip_time_work_minority_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # # TransitTrip
+    # trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
+    # performance_measures['transit_trip_length_work_minority_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    # trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['SeaTacResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
+    # performance_measures['transit_trip_time_work_minority_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
 
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents in Corner Store
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['CornerStoreResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork']
-    performance_measures['auto_trip_length_work_cs_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['CornerStoreResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork']
-    performance_measures['auto_trip_time_work_cs_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['CornerStoreResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork']
-    performance_measures['transit_trip_length_work_cs_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['CornerStoreResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork']
-    performance_measures['transit_trip_time_work_cs_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
 
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are transit dependent
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['CornerStoreResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['auto_trip_length_work_transit_dependent_cs_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['CornerStoreResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['auto_trip_time_work_transit_dependent_cs_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['CornerStoreResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['transit_trip_length_work_transit_dependent_cs_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['CornerStoreResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['transit_trip_time_work_transit_dependent_cs_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+    # Use the function to calculate performance metrics:
+    all_measures = calc_resident_measures(trip_df, 'SeaTacResident')
+    gc_measures = calc_resident_measures(trip_df, 'GrowthCenterResident')
+    nv_measures = calc_resident_measures(trip_df, 'NeighborhoodVillageResident')
+    nc_measures = calc_resident_measures(trip_df, 'NeighborhoodCenterResident')
+    cs_measures = calc_resident_measures(trip_df, 'CornerStoreResident')
 
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are low income
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['CornerStoreResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['auto_trip_length_work_lowinc_cs_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['CornerStoreResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['auto_trip_time_work_lowinc_cs_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['CornerStoreResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['transit_trip_length_work_lowinc_cs_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['CornerStoreResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['transit_trip_time_work_lowinc_cs_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+    # # Average transit and auto trip lengths (miles) and travel times (minutes) to shop for all
+    # # Auto Trip
+    # trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeShop']
+    # all_measures['auto_trip_length_shop_all'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    # trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeShop']
+    # all_measures['auto_trip_time_shop_all'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # # TransitTrip
+    # trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeShop']
+    # all_measures['transit_trip_length_shop_all'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    # trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeShop']
+    # all_measures['transit_trip_time_shop_all'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
 
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are minority
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['CornerStoreResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['auto_trip_length_work_minority_cs_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['CornerStoreResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['auto_trip_time_work_minority_cs_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['CornerStoreResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['transit_trip_length_work_minority_cs_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['CornerStoreResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['transit_trip_time_work_minority_cs_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
+    # # Average transit and auto trip lengths (miles) and travel times (minutes) to social/recreational for all
+    # # Auto Trip
+    # trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeSocRec']
+    # all_measures['auto_trip_length_socrec_all'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
+    # trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeSocRec']
+    # all_measures['auto_trip_time_socrec_all'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
+    # # TransitTrip
+    # trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeSocRec']
+    # all_measures['transit_trip_length_socrec_all'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
+    # trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeSocRec']
+    # all_measures['transit_trip_time_socrec_all'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
 
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents in Corner Store
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['NbhdVillageResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork']
-    performance_measures['auto_trip_length_work_nv_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['NbhdVillageResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork']
-    performance_measures['auto_trip_time_work_nv_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['NbhdVillageResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork']
-    performance_measures['transit_trip_length_work_nv_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['NbhdVillageResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork']
-    performance_measures['transit_trip_time_work_nv_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
-
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are transit dependent
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['NbhdVillageResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['auto_trip_length_work_transit_dependent_nv_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['NbhdVillageResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['auto_trip_time_work_transit_dependent_nv_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['NbhdVillageResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['transit_trip_length_work_transit_dependent_nv_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['NbhdVillageResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['transit_trip_time_work_transit_dependent_nv_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
-
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are low income
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['NbhdVillageResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['auto_trip_length_work_lowinc_nv_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['NbhdVillageResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['auto_trip_time_work_lowinc_nv_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['NbhdVillageResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['transit_trip_length_work_lowinc_nv_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['NbhdVillageResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['transit_trip_time_work_lowinc_nv_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
-
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are minority
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['NbhdVillageResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['auto_trip_length_work_minority_nv_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['NbhdVillageResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['auto_trip_time_work_minority_nv_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['NbhdVillageResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['transit_trip_length_work_minority_nv_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['NbhdVillageResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['transit_trip_time_work_minority_nv_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
-
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents in Corner Store
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['NbhdCorridorResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork']
-    performance_measures['auto_trip_length_work_nc_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['NbhdCorridorResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork']
-    performance_measures['auto_trip_time_work_nc_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['NbhdCorridorResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork']
-    performance_measures['transit_trip_length_work_nc_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['NbhdCorridorResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork']
-    performance_measures['transit_trip_time_work_nc_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
-
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are transit dependent
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['NbhdCorridorResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['auto_trip_length_work_transit_dependent_nc_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['NbhdCorridorResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['auto_trip_time_work_transit_dependent_nc_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['NbhdCorridorResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['transit_trip_length_work_transit_dependent_nc_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['NbhdCorridorResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['TransitDependent']
-    performance_measures['transit_trip_time_work_transit_dependent_nc_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
-
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are low income
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['NbhdCorridorResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['auto_trip_length_work_lowinc_nc_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['NbhdCorridorResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['auto_trip_time_work_lowinc_nc_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['NbhdCorridorResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['transit_trip_length_work_lowinc_nc_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['NbhdCorridorResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['LowIncome']
-    performance_measures['transit_trip_time_work_lowinc_nc_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
-
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to work for SeaTac residents that are minority
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['NbhdCorridorResident'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['auto_trip_length_work_minority_nc_resident'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['NbhdCorridorResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['auto_trip_time_work_minority_nc_resident'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['NbhdCorridorResident'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['transit_trip_length_work_minority_nc_resident'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['NbhdCorridorResident'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeWork'] * trip_df['Minority']
-    performance_measures['transit_trip_time_work_minority_nc_resident'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
-
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to shop for all
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeShop']
-    performance_measures['auto_trip_length_shop_all'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeShop']
-    performance_measures['auto_trip_time_shop_all'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeShop']
-    performance_measures['transit_trip_length_shop_all'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeShop']
-    performance_measures['transit_trip_time_shop_all'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
-
-    # Average transit and auto trip lengths (miles) and travel times (minutes) to social/recreational for all
-    # Auto Trip
-    trip_df['AutoTripLength'] = trip_df['AutoMode'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['PurposeSocRec']
-    performance_measures['auto_trip_length_socrec_all'] = trip_df.loc[trip_df['AutoTripLength']>0,'AutoTripLength'].sum()/trip_df.loc[trip_df['AutoTripLength']>0,'trexpfac'].sum()
-    trip_df['AutoTripTime'] = trip_df['AutoMode'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeSocRec']
-    performance_measures['auto_trip_time_socrec_all'] = trip_df.loc[trip_df['AutoTripTime']>0,'AutoTripTime'].sum()/trip_df.loc[trip_df['AutoTripTime']>0,'trexpfac'].sum()
-    # TransitTrip
-    trip_df['TransitTripLength'] = trip_df['TransitMode'] * trip_df['travdist'] * trip_df['trexpfac']  * trip_df['PurposeSocRec']
-    performance_measures['transit_trip_length_socrec_all'] = trip_df.loc[trip_df['TransitTripLength']>0,'TransitTripLength'].sum()/trip_df.loc[trip_df['TransitTripLength']>0,'trexpfac'].sum()
-    trip_df['TransitTripTime'] = trip_df['TransitMode'] * trip_df['travtime'] * trip_df['trexpfac']  * trip_df['PurposeSocRec']
-    performance_measures['transit_trip_time_socrec_all'] = trip_df.loc[trip_df['TransitTripTime']>0,'TransitTripTime'].sum()/trip_df.loc[trip_df['TransitTripTime']>0,'trexpfac'].sum()
-
-    # Mode share calculations
-    daysim_modes = {1:'walk' , 2:'bike', 3:'sov', 4:'hov2', 5:'hov3+', 6:'transit', 8:'school bus', 9:'other'}
-    daysim_purposes = {0:'none/home', 1:'work', 2:'school', 3:'escort', 4:'pers.bus', 5:'shop', 6:'meal', 7:'social', 8:'recreational', 9:'medical', 10:'change mode inserted purpose'}
-    trip_df['modelabels'] = trip_df['mode'].map(daysim_modes)
-    trip_df['purposelabels'] = trip_df['dpurp'].map(daysim_purposes)
-    mode_shares = trip_df.groupby(['purposelabels', 'modelabels'], as_index=False)['trexpfac'].sum()
-    mode_shares['propshares'] = mode_shares.groupby('purposelabels', as_index=False)['trexpfac'].transform(lambda _x: _x/_x.sum())
-    mode_shares = mode_shares.pivot_table(values='propshares', columns='modelabels', index='purposelabels').reset_index()
-    mode_shares.columns = mode_shares.columns.values
+    # Cacluate VMT
+    # Per resident
+    trip_df['VMT'] = trip_df['AutoMode'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['SeaTacResident']
+    all_measures['vmt_resident'] = trip_df['VMT'].sum()/(per_df['SeaTacResident'] * per_df['psexpfac']).sum()
+    
+    # work tour per employee
+    trip_df['VMT'] = trip_df['AutoMode'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['SeaTacEmployee'] * trip_df['TourPurposeWork']
+    all_measures['vmt_worktour_employee'] = trip_df['VMT'].sum()/(per_df['SeaTacEmployee'] * per_df['psexpfac']).sum()
+    
+    # work tour per resident
+    trip_df['VMT'] = trip_df['AutoMode'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['SeaTacResident'] * trip_df['TourPurposeWork']
+    all_measures['vmt_worktour_resident'] = trip_df['VMT'].sum()/(per_df['SeaTacResident'] * per_df['psexpfac']).sum()
 
     # Delay calculation
     vht_df = pd.read_csv(os.path.join('outputs', 'network', 'vht_subarea_facility.csv'))
-    performance_measures['vht_all'] = vht_df[['arterial', 'connector', 'highway']].sum().sum()
-    performance_measures['vht_seatac'] = vht_df.loc[vht_df['@subarea_flag']==1][['arterial', 'connector', 'highway']].sum().sum()
+    all_measures['vht_all'] = vht_df[['arterial', 'connector', 'highway']].sum().sum()
+    all_measures['vht_seatac'] = vht_df.loc[vht_df['@subarea_flag']==1][['arterial', 'connector', 'highway']].sum().sum()
 
-    measure_df = pd.DataFrame({'Measures':performance_measures.keys(),
-                               'Values':performance_measures.values()})
+    # Calculate concurrency delays index
+    network_df = pd.read_csv(os.path.join('outputs','network','network_results.csv'))
 
-    conn = create_engine('sqlite:///inputs/db/soundcast_inputs.db')
+    # Low income VHT calculation
+    all_measures['vht_lowinc_seatac'] = (network_df[['@sov_inc1', '@hov2_inc1', '@hov3_inc1', '@tnc_inc1']].sum(axis=1) * network_df['@subarea_flag'] * network_df['auto_time']/60).sum()
 
-    ########################################
-    # Transit Boardings by Line
-    ########################################
+    # Concurrency calculation
+    concurrency_df = network_df.loc[network_df['@concurrency']==1]
+    delay_df = concurrency_df.loc[concurrency_df['tod'] == '20to5'][['ij', 'auto_time']]
+    delay_df.rename(columns={'auto_time':'freeflow_time'}, inplace=True)
 
-    # Load observed data for given base year
-    df_obs = pd.read_sql("SELECT * FROM observed_transit_boardings WHERE year=" + str(base_year), con=conn)
-    df_obs['route_id'] = df_obs['route_id'].astype('int')
-    df_line_obs = df_obs.copy()
+    # Merge delay field back onto network link df
+    concurrency_df = pd.merge(concurrency_df, delay_df, on='ij', how='left')
 
-    # Load model results and calculate modeled daily boarding by line
-    df_transit_line = pd.read_csv(r'outputs\transit\transit_line_results.csv')
-    df_model = df_transit_line.copy()
-    df_model_daily = df_model.groupby('route_code').agg({   'description': 'first',
-                                                            'boardings': 'sum'}).reset_index()
+    # Calcualte hourly delay
+    concurrency_df['delayindex'] = concurrency_df['auto_time']/concurrency_df['freeflow_time']    # delay index = congested/freeflow time
+    all_measures['delayindex_concurrency_corridors'] = concurrency_df['auto_time'].sum()/concurrency_df['freeflow_time'].sum()    # delay index = congested/freeflow time
 
-    # Merge modeled with observed boarding data
-    df = df_model_daily.merge(df_obs, left_on='route_code', right_on='route_id', how='left')
-    df.rename(columns={'boardings': 'modeled_5to20', 'observed_20to5': 'observed_5to20'}, inplace=True)
-    df['diff'] = df['modeled_5to20']-df['observed_5to20']
-    df['perc_diff'] = df['diff']/df['observed_5to20']
-    df[['modeled_5to20','observed_5to20']] = df[['modeled_5to20','observed_5to20']].fillna(-1)
+    # Calculate truckroute delays index
+    truckroute_df = network_df.loc[network_df['@truck_route']==1]
+    delay_df = truckroute_df.loc[truckroute_df['tod'] == '20to5'][['ij', 'auto_time']]
+    delay_df.rename(columns={'auto_time':'freeflow_time'}, inplace=True)
 
-    # Write to file
-    df.to_csv(os.path.join(measure_output_dir,'daily_boardings_by_line.csv'), index=False)
+    # Merge delay field back onto network link df
+    truckroute_df = pd.merge(truckroute_df, delay_df, on='ij', how='left')
 
-    # Write SeaTac transit routes
-    seatac_routes = pd.read_csv(r'inputs\model\lookup\seatac_transit_routes.csv')
-    df[df.route_id.isin(seatac_routes.seatac_route_code.values)].to_csv(os.path.join(measure_output_dir, 'daily_boardings_by_lines_seatac.csv'), index=False)
+    # Calcualte hourly delay
+    truckroute_df['delayindex'] = truckroute_df['auto_time']/truckroute_df['freeflow_time']    # delay index = congested/freeflow time
+    all_measures['delayindex_freight_corridors'] = truckroute_df['auto_time'].sum()/truckroute_df['freeflow_time'].sum()    # delay index = congested/freeflow time    
 
-    # Write SeaTac transit routes
-    seatac_airport_routes = pd.read_csv(r'inputs\model\lookup\seatac_airport_transit_routes.csv')
-    df[df.route_id.isin(seatac_airport_routes.seatac_airport_route_code.values)].to_csv(os.path.join(measure_output_dir, 'daily_boardings_by_lines_airport_seatac.csv'), index=False)
-
-    # Boardings by agency
-    df_agency = df.groupby(['agency']).sum().reset_index()
-    df_agency['diff'] = df_agency['modeled_5to20']-df_agency['observed_5to20']
-    df_agency['perc_diff'] = df_agency['diff']/df_agency['observed_5to20']
-    df_agency.to_csv(os.path.join(measure_output_dir,'daily_boardings_by_agency.csv'), 
-                        index=False, columns=['agency','observed_5to20','modeled_5to20','diff','perc_diff'])
-
-    # Boardings for special lines
-    df_special = df[df['route_code'].isin(special_route_list)]
-    df_special.to_csv(os.path.join(measure_output_dir,'daily_boardings_key_routes.csv'), 
-                        index=False, columns=['description','route_code','agency','observed_5to20','modeled_5to20','diff','perc_diff'])
-
-    ########################################
-    # Transit Boardings by Stop
-    ########################################
-	
-    # Light Rail
-    df_obs = pd.read_sql("SELECT * FROM light_rail_station_boardings WHERE year=" + str(base_year), con=conn)
-
-    # Scale boardings for model period 5to20, based on boardings along entire line
-    light_rail_list = [6996]
-    daily_factor = df_line_obs[df_line_obs['route_id'].isin(light_rail_list)]['daily_factor'].values[0]
-    df_obs['observed_5to20'] = df_obs['boardings']/daily_factor
-
-    df = pd.read_csv(r'outputs\transit\boardings_by_stop.csv')
-    df = df[df['i_node'].isin(df_obs['emme_node'])]
-    df = df.merge(df_obs, left_on='i_node', right_on='emme_node')
-    df.rename(columns={'total_boardings':'modeled_5to20'},inplace=True)
-    df['observed_5to20'] = df['observed_5to20'].astype('float')
-    df.index = df['station_name']
-    df_total = df.copy()[['observed_5to20','modeled_5to20']]
-    df_total.loc['Total',['observed_5to20','modeled_5to20']] = df[['observed_5to20','modeled_5to20']].sum().values
-    df_total.to_csv(r'outputs\validation\light_rail_boardings.csv', index=True)
-
-    # Light Rail Transfers
-    df_transfer = df.copy() 
-    df_transfer['observed_transfer_rate'] = df_transfer['observed_transfer_rate'].fillna(-99).astype('float')
-    df_transfer['modeled_transfer_rate'] = df_transfer['transfers']/df_transfer['modeled_5to20']
-    df_transfer['diff'] = df_transfer['modeled_transfer_rate']-df_transfer['observed_transfer_rate']
-    df_transfer['percent_diff'] = df_transfer['diff']/df_transfer['observed_transfer_rate']
-    df_transfer = df_transfer[['modeled_transfer_rate','observed_transfer_rate','diff','percent_diff']]
-    df_transfer.to_csv(r'outputs\validation\light_rail_transfers.csv', index=True)
-
-
-    ########################################
-    # Traffic Volumes
-    ########################################
-
-    # Count data
+    measure_df = pd.DataFrame({'Measures':all_measures.keys(),
+                               'Values':all_measures.values()})
     
-    # Model results
-    df_network = pd.read_csv(r'outputs\network\network_results.csv')
-    model_vol_df = df_network.copy()
-    model_vol_df['@facilitytype'] = model_vol_df['@facilitytype'].map(facility_type_lookup)
+    measure_df['Type'] = ''
+    measure_df['Type'] = np.where(measure_df.Measures.str.contains('resident'),'Resident',measure_df.Type)
+    measure_df['Type'] = np.where(measure_df.Measures.str.contains('employee'),'Employee',measure_df.Type)
+    measure_df['Region'] = np.where((measure_df.Measures.str.contains('all')) & (measure_df.Type==''),'All', 'SeaTAC')
+    measure_df['Mode'] = ''
+    measure_df['Mode'] = np.where(measure_df.Measures.str.contains('auto'),'Auto', measure_df['Mode'])
+    measure_df['Mode'] = np.where((measure_df.Measures.str.contains('transit')) & (measure_df.Mode==''),'Transit', measure_df['Mode'])
+    measure_df['MeasureType'] = ''
+    measure_df['MeasureType'] = np.where(measure_df.Measures.str.contains('length'),'Length', measure_df['MeasureType'])
+    measure_df['MeasureType'] = np.where((measure_df.Measures.str.contains('time')) & (measure_df.MeasureType==''),'Time', measure_df['MeasureType'])
 
-    # Get daily and model volumes
-    #daily_counts = counts.groupby('flag').sum()[['vehicles']].reset_index()
-    daily_counts = pd.read_sql("SELECT * FROM daily_counts WHERE year=" + str(base_year), con=conn)
-    df_daily = model_vol_df.groupby(['@countid']).agg({'@tveh':'sum', '@facilitytype': 'first', '@subarea_flag':'first'}).reset_index()
+    measure_df.to_csv(os.path.join('outputs', 'performance_measures', 'metrics.csv'), index=False)   
 
-    # Merge observed with model
-    df_daily = df_daily.merge(daily_counts, left_on='@countid', right_on='flag')
-
-    # Merge with attributes
-    df_daily.rename(columns={'@tveh': 'modeled','vehicles': 'observed','@subarea_flag':'subarea_flag'}, inplace=True)
-    df_daily['diff'] = df_daily['modeled']-df_daily['observed']
-    df_daily['perc_diff'] = df_daily['diff']/df_daily['observed']
-    df_daily[['modeled','observed']] = df_daily[['modeled','observed']]
-    df_daily['county'] = df_daily['countyid'].map(county_lookup)
-    df_daily.to_csv(os.path.join(measure_output_dir,'daily_volume.csv'), 
-                        index=False, columns=['@countid','@countid','county', 'subarea_flag','@facilitytype','modeled','observed','diff','perc_diff'])
-
-    # Counts by county and facility type
-    df_county_facility_counts = df_daily.groupby(['county','@facilitytype','subarea_flag'])[['observed','modeled']].sum().reset_index()
-    df_county_facility_counts.to_csv(os.path.join(measure_output_dir,'daily_volume_county_facility.csv'))
-
-    # Model results by volume
-    df_daily_volume = model_vol_df.groupby(['@countid', 'ij']).agg({'@tveh':'sum', '@facilitytype': 'first', '@subarea_flag':'first'}).reset_index()
-    df_daily_volume = df_daily_volume[df_daily_volume['@countid']>0].groupby(['@countid']).agg({'@tveh':'sum', '@facilitytype': 'first', '@subarea_flag':['first','count']}).reset_index()
-    df_daily_volume.columns = df_daily_volume.columns.map('_'.join)
-    df_daily_volume = df_daily_volume.merge(daily_counts, left_on='@countid_', right_on='flag')
-    volume_bins = [0, 10000, 25000, 50000, 100000, 999999999]
-    df_daily_volume['volbin'] = pd.cut(df_daily_volume['@tveh_sum'],volume_bins, right=False, labels=False)
-    # df_daily_volume = df_daily_volume.groupby(['volbin','@subarea_flag_first']).agg({'@tveh_sum':'sum', 'vehicles':'sum', '@subarea_flag_count':'sum'}).reset_index()
-    df_daily_volume = df_daily_volume[['@countid_', 'volbin', '@subarea_flag_first', '@tveh_sum', 'vehicles', '@subarea_flag_count']]
-    df_daily_volume.columns = ['countid', 'volbin', 'subarea_flag', 'modeled', 'observed', 'nlinks']
+    gc_measure_df = pd.DataFrame({'Measures':gc_measures.keys(),
+                               'Values':gc_measures.values()})
     
-    df_daily_volume.to_csv(os.path.join(measure_output_dir,'daily_volume_by_flow.csv'), index=False)
+    gc_measure_df['Type'] = ''
+    gc_measure_df['Type'] = np.where(gc_measure_df.Measures.str.contains('resident'),'Resident',gc_measure_df.Type)
+    gc_measure_df['Type'] = np.where(gc_measure_df.Measures.str.contains('employee'),'Employee',gc_measure_df.Type)
+    gc_measure_df['Region'] = np.where((gc_measure_df.Measures.str.contains('all')) & (gc_measure_df.Type==''),'All', 'SeaTAC')
+    gc_measure_df['Mode'] = ''
+    gc_measure_df['Mode'] = np.where(gc_measure_df.Measures.str.contains('auto'),'Auto', gc_measure_df['Mode'])
+    gc_measure_df['Mode'] = np.where((gc_measure_df.Measures.str.contains('transit')) & (gc_measure_df.Mode==''),'Transit', gc_measure_df['Mode'])
 
-    # hourly counts
-    # Create Time of Day (TOD) column based on start hour, group by TOD
-    hr_counts = pd.read_sql("SELECT * FROM hourly_counts WHERE year=" + str(base_year), con=conn)
-    hr_counts['tod'] = hr_counts['start_hour'].map(tod_lookup)
-    counts_tod = hr_counts.groupby(['tod','flag']).sum()[['vehicles']].reset_index()
+    gc_measure_df.to_csv(os.path.join('outputs', 'performance_measures', 'growth_center_metrics.csv'), index=False)      
 
-    # Account for bi-directional links or links that include HOV volumes
-    hr_model = model_vol_df.groupby(['@countid','tod']).agg({'@tveh':'sum','@facilitytype':'first',
-                                                  '@countyid':'first','auto_time':'first',
-                                                  'type':'first', '@subarea_flag':'first'}).reset_index()
-
-    # Join by time of day and flag ID
-    df = pd.merge(hr_model, counts_tod, left_on=['@countid','tod'], right_on=['flag','tod'])
-    df.rename(columns={'@tveh': 'modeled', 'vehicles': 'observed','@subarea_flag':'subarea_flag'}, inplace=True)
-    df['county'] = df['@countyid'].map(county_lookup)
-    df.to_csv(os.path.join(measure_output_dir,'hourly_volume.csv'), index=False)
-
-    # Truck counts
-    truck_counts = pd.read_sql("SELECT * FROM daily_truck_counts", con=conn)
-    df_truck_daily = model_vol_df.groupby(['@countid']).agg({'@mveh':'sum', '@hveh':'sum', '@facilitytype': 'first', '@subarea_flag':'first'}).reset_index()
-    # Merge observed with model
-    df_truck_daily = df_truck_daily.merge(truck_counts, left_on='@countid', right_on='flag')
-
-    # Merge with attributes
-    df_truck_daily.rename(columns={'@mveh': 'modeled_medt','@hveh': 'modeled_hvyt','@subarea_flag':'subarea_flag'}, inplace=True)
-    df_truck_daily['diff_medt'] = df_truck_daily['modeled_medt']-df_truck_daily['observed_medt']
-    df_truck_daily['perc_diff_medt'] = df_truck_daily['diff_medt']/df_truck_daily['observed_medt']
-    df_truck_daily[['modeled_medt','observed_medt']] = df_truck_daily[['modeled_medt','observed_medt']].apply(lambda x: round(x,2))
-    df_truck_daily['diff_hvyt'] = df_truck_daily['modeled_hvyt']-df_truck_daily['observed_hvyt']
-    df_truck_daily['perc_diff_hvyt'] = df_truck_daily['diff_hvyt']/df_truck_daily['observed_hvyt']
-    df_truck_daily[['modeled_hvyt','observed_hvyt']] = df_truck_daily[['modeled_hvyt','observed_hvyt']].apply(lambda x: round(x,2))
-    df_truck_daily['modeled'] = df_truck_daily['modeled_medt']+df_truck_daily['modeled_hvyt']
-    df_truck_daily['observed'] = df_truck_daily['observed_medt']+df_truck_daily['observed_hvyt']
-    df_truck_daily['diff'] = df_truck_daily['modeled']-df_truck_daily['observed']
-    df_truck_daily['perc_diff'] = df_truck_daily['diff']/df_truck_daily['observed']
-    df_truck_daily[['modeled','observed']] = df_truck_daily[['modeled','observed']].apply(lambda x: round(x,2))
-    df_truck_daily.to_csv(os.path.join(measure_output_dir,'daily_truck_volume.csv'), 
-                        index=False)
-
-    # Roll up results to assignment periods
-    df['time_period'] = df['tod'].map(sound_cast_net_dict)
-
-    ########################################
-    # Ferry Boardings by Bike
-    ########################################    
-    df_transit_seg = pd.read_csv(r'outputs\transit\transit_segment_results.csv')
-    df_transit_seg = df_transit_seg[df_transit_seg['tod'] == '7to8']
-    df_transit_seg = df_transit_seg.drop_duplicates(['i_node','line_id'])
-    df_transit_line = df_transit_line[df_transit_line['tod'] == '7to8']
-
-    _df = df_transit_line.merge(df_transit_seg, on='line_id', how='left')
-    _df = _df.drop_duplicates('line_id')
-
-    df_ij = _df.merge(df_network, left_on='i_node', right_on='i_node', how='left')
-    # select only ferries
-    df_ij = df_ij[df_ij['@facilitytype'].isin([15,16])]
-    # both link and transit line modes should only include passenger (p) or general ferries (f)
-    for colname in ['modes','mode']:
-        df_ij['_filter'] = df_ij[colname].apply(lambda x: 1 if 'f' in x or 'p' in x else 0)
-        df_ij = df_ij[df_ij['_filter'] == 1]
-        
-    df_total = df_ij.groupby('route_code').sum()[['@bvol']].reset_index()
-    df_total = df_total.merge(df_ij[['description','route_code']], on='route_code').drop_duplicates('route_code')
-    df_total.to_csv(r'outputs\validation\bike_ferry_boardings.csv', index=False)
-
-    ########################################
-    # Vehicle Screenlines 
-    ########################################
-
-    # Screenline is defined in "type" field for network links, all values other than 90 represent a screenline
-
-    # Daily volume screenlines
-    #df = model_vol_df.merge(model_vol_df[['i_node','j_node','type']], on=['i_node','j_node'], how='left').drop_duplicates()
-    #df = model_vol_df.copy()
-    #df = df.groupby('type').sum()[['@tveh']].reset_index()
-
-    # Observed screenline data
-    df_obs = pd.read_sql("SELECT * FROM observed_screenline_volumes WHERE year=" + str(base_year), con=conn)
-    df_obs['observed'] = df_obs['observed'].astype('float')
-
-    df_model = pd.read_csv(r'outputs\network\network_results.csv')
-    df_model = model_vol_df.copy()
-    df_model['screenline_id'] = df_model['type'].astype('str')
-    # Auburn screenline is the combination of 14 and 15, change label for 14 and 15 to a combined label
-    df_model.loc[df_model['screenline_id'].isin(['14','15']),'screenline_id'] = '14/15'
-    _df = df_model.groupby(['screenline_id', '@subarea_flag']).sum()[['@tveh']].reset_index()
-
-    _df = _df.merge(df_obs, on='screenline_id')
-    _df.rename(columns={'@tveh':'modeled', '@subarea_flag':'subarea_flag'},inplace=True)
-    _df = _df[['name','observed','modeled','county', 'subarea_flag']]
-    _df['diff'] = _df['modeled']-_df['observed']
-    _df = _df.sort_values('observed',ascending=False)
-    _df.to_csv(r'outputs\validation\screenlines.csv', index=False)
+    nv_measure_df = pd.DataFrame({'Measures':nv_measures.keys(),
+                               'Values':nv_measures.values()})
     
-    ########################################
-    # External Volumes
-    ########################################
+    nv_measure_df['Type'] = ''
+    nv_measure_df['Type'] = np.where(nv_measure_df.Measures.str.contains('resident'),'Resident',nv_measure_df.Type)
+    nv_measure_df['Type'] = np.where(nv_measure_df.Measures.str.contains('employee'),'Employee',nv_measure_df.Type)
+    nv_measure_df['Region'] = np.where((nv_measure_df.Measures.str.contains('all')) & (nv_measure_df.Type==''),'All', 'SeaTAC')
+    nv_measure_df['Mode'] = ''
+    nv_measure_df['Mode'] = np.where(nv_measure_df.Measures.str.contains('auto'),'Auto', nv_measure_df['Mode'])
+    nv_measure_df['Mode'] = np.where((nv_measure_df.Measures.str.contains('transit')) & (nv_measure_df.Mode==''),'Transit', nv_measure_df['Mode'])
 
-    # External stations
-    external_stations = range(MIN_EXTERNAL,MAX_EXTERNAL+1)
-    df_model = df_model[df_model['@countid'].isin(external_stations)]
-    _df = df_model.groupby('@countid').sum()[['@tveh']].reset_index()
+    nv_measure_df.to_csv(os.path.join('outputs', 'performance_measures', 'nbhd_village_metrics.csv'), index=False)     
 
-    # Join to observed
-    # By Mode
-    df_obs = pd.read_sql("SELECT * FROM observed_external_volumes WHERE year=" + str(base_year), con=conn)
-    newdf = _df.merge(df_obs,left_on='@countid' ,right_on='external_station')
-    newdf.rename(columns={'@tveh':'modeled','AWDT':'observed'},inplace=True)
-    newdf['observed'] = newdf['observed'].astype('float')
-    newdf['diff'] = newdf['modeled'] - newdf['observed']
-    newdf = newdf[['external_station','location','county','observed','modeled','diff']].sort_values('observed',ascending=False)
-    newdf.to_csv(r'outputs\validation\external_volumes.csv',index=False)
-	
-	
-	########################################
-	# Corridor Speeds
-	########################################
-	
-    df_model = model_vol_df.copy()
-    df_model['@corridorid'] = df_model['@corridorid'].astype('int')
-
-    df_obs = pd.read_sql_table('observed_corridor_speed', conn) 
-
-    # Average  6 and 7 pm observed data 
-    df_obs['6pm_spd_7pm_spd_avg'] = (df_obs['6pm_spd'] + df_obs['7pm_spd'])/2.0
-
-    df_obs[['Flag1','Flag2','Flag3','Flag4','Flag5','Flag6']] = df_obs[['Flag1','Flag2','Flag3','Flag4','Flag5','Flag6']].fillna(-1).astype('int')
-
-    tod_cols = [u'ff_spd', u'5am_spd', u'6am_spd',
-    	   u'7am_spd', u'8am_spd', u'9am_spd', u'3pm_spd', u'4pm_spd', u'5pm_spd',
-    	   u'6pm_spd_7pm_spd_avg']
-
-    _df_obs = pd.melt(df_obs, id_vars='Corridor_Number', value_vars=tod_cols, var_name='tod', value_name='observed_speed')
-    _df_obs = _df_obs[_df_obs['tod'] != 'ff_spd']
-
-    # Set TOD
-    tod_dict = {
-        # hour of observed data represents start hour
-    	'5am_spd': '5to6',
-    	'6am_spd': '6to7',
-    	'7am_spd': '7to8',
-    	'8am_spd': '8to9',
-    	'9am_spd': '9to10',
-    	'3pm_spd': '15to16',
-    	'4pm_spd': '16to17',
-    	'5pm_spd': '17to18',
-    	'6pm_spd_7pm_spd_avg': '18to20',
-    }
-    _df_obs['tod'] = _df_obs['tod'].map(tod_dict)
-
-    _df = _df_obs.merge(df_obs, on=['Corridor_Number'])
-    _df.drop(tod_cols, axis=1, inplace=True)
-
-    # Get the corridor number from the flag file
-    flag_lookup_df = pd.melt(df_obs[['Corridor_Number','Flag1', 'Flag2','Flag3','Flag4','Flag5','Flag6']], 
-    		id_vars='Corridor_Number', value_vars=['Flag1', 'Flag2','Flag3','Flag4','Flag5','Flag6'], 
-    		var_name='flag_number', value_name='flag_value')
-
-    df_speed = df_model.merge(flag_lookup_df,left_on='@corridorid',right_on='flag_value')
-
-    # Note that we need to separate out the Managed HOV lanes
-    df_speed = df_speed[df_speed['@is_managed'] == 0]
-
-    df_speed = df_speed.groupby(['Corridor_Number','tod','@subarea_flag']).sum()[['auto_time','length']].reset_index()
-    df_speed['model_speed'] = (df_speed['length']/df_speed['auto_time'])*60
-    df_speed = df_speed[(df_speed['model_speed'] < 80) & ((df_speed['model_speed'] > 0))]
-    df_speed = df_speed.rename(columns={'@subarea_flag':'subarea_flag'})
-
-    # Join to the observed data
-    df_speed = df_speed.merge(_df,on=['Corridor_Number','tod'])
-
-    df_speed.plot(kind='scatter', y='model_speed', x='observed_speed')
-    df_speed.to_csv(r'outputs\validation\corridor_speeds.csv', index=False)
-
-    ########################################
-    # ACS Comparisons
-    ########################################
-
-    # Auto Ownership
-    df_obs = pd.read_sql("SELECT * FROM observed_auto_ownership_acs_block_group", con=conn)
-    df_obs.index = df_obs['GEOID10']
-    df_obs.drop(['id','GEOID10'], inplace=True, axis=1)
-    df_obs.rename(columns={'cars_none_control': 0, 'cars_one_control': 1, 'cars_two_or_more_control': 2}, inplace=True)
-    df_obs_sum = df_obs.sum()
-    df_obs_sum = pd.DataFrame(df_obs_sum, columns=['census'])
-    df_obs = df_obs.unstack().reset_index()
-    df_obs.rename(columns={'level_0': 'hhvehs', 0: 'census'}, inplace=True)
-
-    df_model = pd.read_csv(r'outputs\agg\census\auto_ownership_block_group.csv')
-    # Record categories to max of 2+
-    df_model.loc[df_model['hhvehs'] >= 2, 'hhvehs'] = 2
-    df_model = df_model.groupby(['hhvehs','hh_block_group']).sum()[['hhexpfac']].reset_index()
-
-    df_model_sum = df_model.pivot_table(index='hh_block_group', columns='hhvehs', aggfunc='sum', values='hhexpfac')
-    df_model_sum = df_model_sum.fillna(0)
-    df_model_sum = df_model_sum.sum()
-    df_model_sum = pd.DataFrame(df_model_sum.reset_index(drop=True), columns=['model'])
-    df_sum = df_obs_sum.merge(df_model_sum,left_index=True,right_index=True)
-    df = df_model.merge(df_obs, left_on=['hh_block_group','hhvehs'], right_on=['GEOID10','hhvehs'], how='left')
-    df.rename(columns={'hhexpfac': 'modeled'}, inplace=True)
-    df.to_csv(r'outputs\validation\auto_ownership_block_group.csv', index=False)
-
-    # compare vs survey
-    df_survey = pd.read_csv(r'outputs\agg\census\survey\auto_ownership_block_group.csv')
+    nc_measure_df = pd.DataFrame({'Measures':nc_measures.keys(),
+                               'Values':nc_measures.values()})
     
-    df_survey.loc[df_survey['hhvehs'] >= 2, 'hhvehs'] = 2
-    df_survey = df_survey.groupby(['hhvehs','hh_block_group']).sum()[['hhexpfac']].reset_index()
+    nc_measure_df['Type'] = ''
+    nc_measure_df['Type'] = np.where(nc_measure_df.Measures.str.contains('resident'),'Resident',nc_measure_df.Type)
+    nc_measure_df['Type'] = np.where(nc_measure_df.Measures.str.contains('employee'),'Employee',nc_measure_df.Type)
+    nc_measure_df['Region'] = np.where((nc_measure_df.Measures.str.contains('all')) & (nc_measure_df.Type==''),'All', 'SeaTAC')
+    nc_measure_df['Mode'] = ''
+    nc_measure_df['Mode'] = np.where(nc_measure_df.Measures.str.contains('auto'),'Auto', nc_measure_df['Mode'])
+    nc_measure_df['Mode'] = np.where((nc_measure_df.Measures.str.contains('transit')) & (nc_measure_df.Mode==''),'Transit', nc_measure_df['Mode'])
 
-    df_survey_sum = df_survey.pivot_table(index='hh_block_group', columns='hhvehs', aggfunc='sum', values='hhexpfac')
-    df_survey_sum = df_survey_sum.fillna(0)
-    df_survey_sum = df_survey_sum.sum()
-    df_survey_sum = pd.DataFrame(df_survey_sum.reset_index(drop=True), columns=['survey'])
-    df_sum.merge(df_survey_sum, left_index=True, right_index=True).to_csv(r'outputs\validation\auto_ownership_census_totals.csv', index=False)
+    nc_measure_df.to_csv(os.path.join('outputs', 'performance_measures', 'nbhd_center_metrics.csv'), index=False)    
 
-    # Commute Mode Share by Workplace Geography
-    # Model Data
-    df_model = pd.read_csv(r'outputs\agg\census\tour_place.csv')
-    df_model = df_model[df_model['pdpurp'] == 'Work']
-    df_model = df_model.groupby(['t_o_place','t_d_place','tmodetp']).sum()[['toexpfac']].reset_index()
-    # rename columns
-    df_model.loc[df_model['tmodetp'] == 'SOV','mode'] = 'auto'
-    df_model.loc[df_model['tmodetp'] == 'HOV2','mode'] = 'auto'
-    df_model.loc[df_model['tmodetp'] == 'HOV3+','mode'] = 'auto'
-    df_model.loc[df_model['tmodetp'] == 'Transit','mode'] = 'transit'
-    df_model.loc[df_model['tmodetp'] == 'Walk','mode'] = 'walk_and_bike'
-    df_model.loc[df_model['tmodetp'] == 'Bike','mode'] = 'walk_and_bike'
-    df_model = df_model.groupby(['mode','t_d_place']).sum()[['toexpfac']].reset_index()
-
-    # Observed Data
-    df = pd.read_sql("SELECT * FROM acs_commute_mode_by_workplace_geog WHERE year=" + str(base_year), con=conn)
-    df = df[df['geography'] == 'place']
-    df = df[df['mode'] != 'worked_at_home']
-    df['geog_name'] = df['geog_name'].apply(lambda row: row.split(' city')[0])
-
-    # FIXME: 
-    # no HOV modes - is SOV including all auto trips?
-    df.loc[df['mode']=='sov','mode'] = 'auto'
-
-    # Merge modeled and observed
-    df = df.merge(df_model, left_on=['geog_name','mode'], right_on=['t_d_place','mode'])
-    df.rename(columns={'trips': 'observed', 'toexpfac': 'modeled', 'geog_name': 'work_place'}, inplace=True)
-    df = df[['work_place','mode','modeled','observed']]
-    df['percent_diff'] = (df['modeled']-df['observed'])/df['observed']
-    df['diff'] = df['modeled']-df['observed']
-
-    df.to_csv(r'outputs\validation\acs_commute_share_by_workplace_geog.csv',index=False)
-
-    # Commute Mode Share by Home Tract
-    df_model = pd.read_csv(r'outputs\agg\census\tour_dtract.csv')
-
-    df_model[['to_tract','td_tract']] = df_model[['to_tract','td_tract']].astype('str')
-    df_model['to_tract'] = df_model['to_tract'].apply(lambda row: row.split('.')[0])
-    df_model['td_tract'] = df_model['td_tract'].apply(lambda row: row.split('.')[0])
-
-    df_model = df_model[df_model['pdpurp'] == 'Work']
-    df_model = df_model.groupby(['to_tract','tmodetp']).sum()[['toexpfac']].reset_index()
-
-    # # Group all HOV together
-    df_model['mode'] = df_model['tmodetp']
-    df_model.loc[df_model['tmodetp'] == 'HOV2', 'mode'] = 'HOV'
-    df_model.loc[df_model['tmodetp'] == 'HOV3+', 'mode'] = 'HOV'
-    df_model = df_model.groupby(['to_tract','mode']).sum().reset_index()
-
-    df_model['to_tract']=df_model['to_tract'].astype('int64')
-    df_model['modeled'] = df_model['toexpfac']
-
-    # Load the census data
-    df_acs = pd.read_sql("SELECT * FROM acs_commute_mode_home_tract WHERE year=" + str(base_year), con=conn)
+    cs_measure_df = pd.DataFrame({'Measures':cs_measures.keys(),
+                               'Values':cs_measures.values()})
     
-    # Select only tract records
-    df_acs = df_acs[df_acs['place_type'] == 'tr']
+    cs_measure_df['Type'] = ''
+    cs_measure_df['Type'] = np.where(cs_measure_df.Measures.str.contains('resident'),'Resident',cs_measure_df.Type)
+    cs_measure_df['Type'] = np.where(cs_measure_df.Measures.str.contains('employee'),'Employee',cs_measure_df.Type)
+    cs_measure_df['Region'] = np.where((cs_measure_df.Measures.str.contains('all')) & (cs_measure_df.Type==''),'All', 'SeaTAC')
+    cs_measure_df['Mode'] = ''
+    cs_measure_df['Mode'] = np.where(cs_measure_df.Measures.str.contains('auto'),'Auto', cs_measure_df['Mode'])
+    cs_measure_df['Mode'] = np.where((cs_measure_df.Measures.str.contains('transit')) & (cs_measure_df.Mode==''),'Transit', cs_measure_df['Mode'])
 
-    # Only include modes for people that travel to work (exclude telecommuters and others)
-    mode_map = {'Drove Alone': 'SOV',
-                'Carpooled': 'HOV',
-                'Walked': 'Walk',
-                'Other': 'Other',
-               'Transit':'Transit'}
+    cs_measure_df.to_csv(os.path.join('outputs', 'performance_measures', 'corner_store_metrics.csv'), index=False)     
 
-    df_acs['mode'] = df_acs['variable_description'].map(mode_map)
-    df_acs = df_acs[-df_acs['mode'].isnull()]
+    
 
-    # Drop the Other mode for now
-    df_acs = df_acs[df_acs['mode'] != 'Other']
+    # Mode share calculations
+    daysim_modes = {1:'walk' , 2:'bike', 3:'sov', 4:'hov2', 5:'hov3+', 6:'transit', 8:'school bus', 9:'tnc'}
+    daysim_purposes = {0:'home', 1:'work', 2:'school', 3:'escort', 4:'personal business', 5:'shop', 6:'meal', 7:'social/recreational', 8:'social/recreational', 9:'personal business', 10:'change mode inserted purpose'}
+    # daysim_purposes = {0:'none/home', 1:'work', 2:'school', 3:'escort', 4:'pers.bus', 5:'shop', 6:'meal', 7:'social', 8:'recreational', 9:'medical', 10:'change mode inserted purpose'}
 
-    # Merge the model and observed data
-    df = df_acs[['mode','geoid','place_name','estimate','margin_of_error']].merge(df_model,left_on=['geoid','mode'], 
-                                                                             right_on=['to_tract','mode'])
-    df.rename(columns={'estimate': 'observed', 'trexpfac': 'modeled'}, inplace=True)
-    df[['observed','modeled']] = df[['observed','modeled']].astype('float')
+    
 
-    # Add geography columns based on tract
-    parcel_geog = pd.read_sql("SELECT * FROM parcel_"+str(base_year)+"_geography", con=conn) 
+    trip_df['modelabels'] = trip_df['mode'].map(daysim_modes)
+    trip_df['purposelabels'] = trip_df['dpurp'].map(daysim_purposes)
+    mode_shares = trip_df.loc[(trip_df['SeaTacResident']==1) & (trip_df['dpurp']<10)].assign(persontrips=lambda _df: _df.trexpfac).groupby(['purposelabels', 'modelabels'], as_index=False)['persontrips'].sum()
+    # mode_shares = trip_df.loc[(trip_df['SeaTacResident']==1) & (trip_df['dpurp']<10)].assign(vehtrips=lambda _df: _df.trexpfac*np.where(_df.OccFactor>0,_df.OccFactor,1)).groupby(['purposelabels', 'modelabels'], as_index=False)['vehtrips'].sum()
+    mode_shares['propshares'] = mode_shares.groupby('purposelabels', as_index=False)['persontrips'].transform(lambda _x: _x/_x.sum())
+    mode_shares = mode_shares.pivot_table(values='propshares', columns='modelabels', index='purposelabels').reset_index()
+    mode_shares.columns = mode_shares.columns.values
+    mode_shares.to_csv(os.path.join('outputs', 'performance_measures', 'mode_shares_resident.csv'), index=False)   
 
-    tract_geog = parcel_geog.groupby('Census2010Tract').first()[['CountyName','rg_proposed','CityName','GrowthCenterName','TAZ','District','subarea_flag']].reset_index()
-    df = df.merge(tract_geog, left_on='geoid', right_on='Census2010Tract', how='left')
-    df.to_csv(r'outputs\validation\acs_commute_share_by_home_tract.csv', index=False)
-	
-	# Copy select results to dash directory    # Copy existing CSV files for topsheet
-    dash_table_list = ['daily_volume_county_facility','external_volumes','screenlines','daily_volume','daily_boardings_by_agency', 
-        'daily_boardings_key_routes','light_rail_boardings']
-    for fname in dash_table_list:
-        shutil.copy(os.path.join(r'outputs/validation',fname+'.csv'), r'outputs/agg/dash')
+    # Sustainaible mode share calculations    
+    sus_mode_shares = trip_df.loc[(trip_df.modelabels.isin(['walk', 'bike', 'transit'])) & (trip_df['SeaTacResident']==1) & (trip_df['dpurp']<10)].assign(persontrips=lambda _df: _df.trexpfac).groupby(['modelabels'], as_index=False)['persontrips'].sum()
+    sus_mode_shares['propshares'] = sus_mode_shares['persontrips'].transform(lambda _x: _x/_x.sum())
+    # sus_mode_shares = sus_mode_shares.pivot_table(values='propshares', columns='modelabels').reset_index()
+    # sus_mode_shares.columns = mode_shares.columns.values
+    sus_mode_shares.to_csv(os.path.join('outputs', 'performance_measures', 'sus_mode_shares_resident.csv'), index=False)   
+
+    # Transit service hours
+    transit_df = pd.read_csv(os.path.join('outputs','transit','transit_line_results.csv'))
+    transit_summaries = transit_df.groupby('mode', as_index=False)['time', 'length'].sum()
+    transit_modes_dict = {'b': 'Bus', 'c': 'Commuter Rail', 'r': 'Light Rail', 'f': 'Ferry', 'p': 'Passenger Ferry'}
+    transit_summaries['TransitMode'] = transit_summaries['mode'].map(transit_modes_dict)
+    transit_summaries['time'] = transit_summaries['time']/60
+    transit_summaries[['TransitMode', 'time', 'length']].to_csv(os.path.join('outputs', 'performance_measures', 'transit_summaries.csv'), index=False)   
 
 if __name__ == '__main__':
     main()

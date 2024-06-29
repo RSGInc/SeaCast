@@ -86,7 +86,7 @@ def calc_total_vehicles(my_project):
         str_expression += ' + @dveh'
 
     my_project.network_calculator("link_calculation", result='@tveh', expression=str_expression)
-    
+
 def freeflow_skims(my_project, dictZoneLookup):
     """ Attach "freeflow" (20to5) SOV skims to daysim_outputs """
 
@@ -399,7 +399,8 @@ def transit_summary(emme_project, df_transit_line, df_transit_node, df_transit_s
                                   'description': line.description,
                                   'boardings': line['@board'], 
                                   'time': line['@timtr'],
-                                  'transit_type': line['@transittype']})
+                                  'transit_type': line['@transittype'],
+                                  'length': line['@length']})
     _df_transit_line = pd.DataFrame(transit_line_data)
     _df_transit_line['tod'] = tod
    
