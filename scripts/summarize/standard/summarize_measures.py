@@ -96,7 +96,7 @@ tod_lookup = {  0:'20to5',
                 17:'17to18',
                 18:'18to20',
                 19:'18to20',
-                20:'18to20',
+                20:'20to5',
                 21:'20to5',
                 22:'20to5',
                 23:'20to5'}
@@ -496,40 +496,55 @@ def main():
     trip_df['VMT'] = trip_df['AutoMode'] * trip_df['OccFactor'] * trip_df['travdist'] * trip_df['trexpfac'] * trip_df['SeaTacResident'] * trip_df['TourPurposeWork']
     all_measures['vmt_worktour_resident'] = trip_df['VMT'].sum()/(per_df['SeaTacResident'] * per_df['psexpfac']).sum()
 
-    # Delay calculation
-    vht_df = pd.read_csv(os.path.join('outputs', 'network', 'vht_subarea_facility.csv'))
-    all_measures['vht_all'] = vht_df[['arterial', 'connector', 'highway']].sum().sum()
-    all_measures['vht_seatac'] = vht_df.loc[vht_df['@subarea_flag']==1][['arterial', 'connector', 'highway']].sum().sum()
+    # # VHT calculation
+    # vht_df = pd.read_csv(os.path.join('outputs', 'network', 'vht_subarea_facility.csv'))
+    # all_measures['vht_all'] = vht_df[['arterial', 'connector', 'highway']].sum().sum()
+    # all_measures['vht_seatac'] = vht_df.loc[vht_df['@subarea_flag']==1][['arterial', 'connector', 'highway']].sum().sum()
 
     # Calculate concurrency delays index
     network_df = pd.read_csv(os.path.join('outputs','network','network_results.csv'))
+    valid_links = network_df.loc[network_df['@tveh'] > 0]['ij'].unique()
+    network_filtered_df = network_df.loc[network_df.ij.isin(valid_links)]
 
     # Low income VHT calculation
-    all_measures['vht_lowinc_seatac'] = (network_df[['@sov_inc1', '@hov2_inc1', '@hov3_inc1', '@tnc_inc1']].sum(axis=1) * network_df['@subarea_flag'] * network_df['auto_time']/60).sum()
+    # all_measures['vht_lowinc_seatac'] = (network_filtered_df[['@sov_inc1', '@hov2_inc1', '@hov3_inc1', '@tnc_inc1']].sum(axis=1) * network_filtered_df['@subarea_flag'] * network_filtered_df['auto_time']/60).sum()
+
+    # Delay calculation
+    delay_df = network_filtered_df.loc[network_filtered_df['tod'] == '20to5'][['ij', 'auto_time']]
+    delay_df.rename(columns={'auto_time':'freeflow_time'}, inplace=True)
+
+    # Merge delay field back onto network link df
+    network_filtered_df = pd.merge(network_filtered_df, delay_df, on='ij', how='left')
+    network_filtered_df['delay'] = ((network_filtered_df['auto_time']-network_filtered_df['freeflow_time'])*network_filtered_df['@tveh'])/60    # sum of (volume)*(travtime diff from freeflow)
+    network_filtered_df['delay_lowinc'] = ((network_filtered_df['auto_time']-network_filtered_df['freeflow_time'])*network_filtered_df[['@sov_inc1', '@hov2_inc1', '@hov3_inc1', '@tnc_inc1']].sum(axis=1))/60    # sum of (volume)*(travtime diff from freeflow)
+
+    all_measures['vhd_all'] = network_filtered_df['delay'].sum()
+    all_measures['vhd_seatac'] = network_filtered_df.loc[network_filtered_df['@subarea_flag']==1,'delay'].sum()
+    all_measures['vhd_lowinc_seatac'] = network_filtered_df.loc[network_filtered_df['@subarea_flag']==1,'delay_lowinc'].sum()
+
+    # Read corridor links
+    corridor_links_df = pd.read_csv(os.path.join('inputs', 'model', 'lookup', 'PM_edges_CC.csv'))
+    network_filtered_df['corridorid'] = -1
+    network_filtered_df['corridorid'] = reindex(corridor_links_df[~corridor_links_df.ID.duplicated()].set_index('ID')['Corr-Dir'], network_filtered_df['ij'])
 
     # Concurrency calculation
-    concurrency_df = network_df.loc[network_df['@concurrency']==1]
-    delay_df = concurrency_df.loc[concurrency_df['tod'] == '20to5'][['ij', 'auto_time']]
-    delay_df.rename(columns={'auto_time':'freeflow_time'}, inplace=True)
+    # concurrency_df = network_filtered_df.loc[network_filtered_df['@concurrency']==1].copy()
+    corridor_delay_df = network_filtered_df.loc[(~network_filtered_df.corridorid.isna()) & (network_filtered_df.tod=='16to17')]
 
-    # Merge delay field back onto network link df
-    concurrency_df = pd.merge(concurrency_df, delay_df, on='ij', how='left')
-
-    # Calcualte hourly delay
-    concurrency_df['delayindex'] = concurrency_df['auto_time']/concurrency_df['freeflow_time']    # delay index = congested/freeflow time
-    all_measures['delayindex_concurrency_corridors'] = concurrency_df['auto_time'].sum()/concurrency_df['freeflow_time'].sum()    # delay index = congested/freeflow time
-
-    # Calculate truckroute delays index
-    truckroute_df = network_df.loc[network_df['@truck_route']==1]
-    delay_df = truckroute_df.loc[truckroute_df['tod'] == '20to5'][['ij', 'auto_time']]
-    delay_df.rename(columns={'auto_time':'freeflow_time'}, inplace=True)
-
-    # Merge delay field back onto network link df
-    truckroute_df = pd.merge(truckroute_df, delay_df, on='ij', how='left')
+    for corridor_index, corridor_df in corridor_delay_df.groupby('corridorid'):
+        metric_name = 'delayindex_corridor_num' + str(corridor_index)
+        all_measures[metric_name] = corridor_df['auto_time'].sum()/corridor_df['freeflow_time'].sum()
 
     # Calcualte hourly delay
-    truckroute_df['delayindex'] = truckroute_df['auto_time']/truckroute_df['freeflow_time']    # delay index = congested/freeflow time
-    all_measures['delayindex_freight_corridors'] = truckroute_df['auto_time'].sum()/truckroute_df['freeflow_time'].sum()    # delay index = congested/freeflow time    
+    # concurrency_df['delayindex'] = concurrency_df['auto_time']/concurrency_df['freeflow_time']    # delay index = congested/freeflow time
+    # all_measures['delayindex_concurrency_corridors'] = concurrency_df['auto_time'].sum()/concurrency_df['freeflow_time'].sum()    # delay index = congested/freeflow time
+
+    # # Calculate truckroute delays index
+    # truckroute_df = network_filtered_df.loc[network_filtered_df['@truck_route']==1]
+
+    # # Calcualte hourly delay
+    # truckroute_df['delayindex'] = truckroute_df['auto_time']/truckroute_df['freeflow_time']    # delay index = congested/freeflow time
+    # all_measures['delayindex_freight_corridors'] = truckroute_df['auto_time'].sum()/truckroute_df['freeflow_time'].sum()    # delay index = congested/freeflow time    
 
     measure_df = pd.DataFrame({'Measures':all_measures.keys(),
                                'Values':all_measures.values()})
