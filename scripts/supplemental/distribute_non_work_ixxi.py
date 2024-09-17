@@ -10,10 +10,8 @@ from sqlalchemy import create_engine
 sys.path.append(os.path.join(os.getcwd(),"scripts"))
 sys.path.append(os.path.join(os.getcwd(),"scripts/trucks"))
 sys.path.append(os.getcwd())
-# from emme_configuration import *
+from emme_configuration import *
 from EmmeProject import *
-import toml
-emme_config = toml.load(os.path.join(os.getcwd(), 'configuration/emme_configuration.toml'))
 
 def load_skims(skim_file_loc, mode_name, divide_by_100=False):
     ''' Loads H5 skim matrix for specified mode. '''
@@ -28,12 +26,17 @@ def load_skims(skim_file_loc, mode_name, divide_by_100=False):
 def calc_fric_fac(cost_skim, dist_skim, _coeff_df):
     ''' Calculate friction factors for all trip purposes '''
     friction_fac_dic = {}
+    MIN_EXTERNAL_INDEX=dictZoneLookup[MIN_EXTERNAL]
+    MAX_EXTERNAL_INDEX=dictZoneLookup[MAX_EXTERNAL]
+    LOW_PNR_INDEX=dictZoneLookup[LOW_PNR]
     for index, row in _coeff_df.iterrows():
-        MIN_EXTERNAL_INDEX = dictZoneLookup[MIN_EXTERNAL]
         friction_fac_dic[row['purpose']] = np.exp((row['coefficient_value'])*(cost_skim + (dist_skim * autoop * avotda)))
-        ## Set external zones to zero to prevent external-external trips
+        ## Set external zones to zero to prevent external-external trips.
+        ## Friction factors are already calucated to be zero but this step will ensure that are definitely zero
         friction_fac_dic[row['purpose']][MIN_EXTERNAL_INDEX:,MIN_EXTERNAL_INDEX:] = 0
-        #friction_fac_dic[row['purpose']][:,[x for x in range(MIN_EXTERNAL_INDEX, len(cost_skim))]] = 0
+        ## Set everything to PNR nodes to zero
+        friction_fac_dic[row['purpose']][LOW_PNR_INDEX:,:] = 0
+        friction_fac_dic[row['purpose']][:,LOW_PNR_INDEX:] = 0
 
     return friction_fac_dic
 
@@ -67,9 +70,11 @@ def load_matrices_to_emme(trip_table_in, trip_purps, fric_facs, my_project):
 
         for p_a in ['pro', 'att']:
             # Load zonal production and attractions from CSV (output from trip generation)
-            trips = np.array(trip_table_in[purpose + p_a].reindex(zones, fill_value=0))
-            #trips = np.array(trip_table_in[purpose + p_a])
-            #trips = np.resize(trips, zonesDim)
+            
+            trips = np.array(trip_table_in[purpose + p_a].reindex(zones,fill_value=0))
+            trips.resize(zonesDim) # Code has been changed because the following code np.resize if the 
+            # new array is longer than older arrary then new array is filled with repeated copies of older array
+            # trips = np.resize(trips, zonesDim)
             #code below does not work for GQs because there are only 3700 records in the csv file. Not sure if code above is ideal.
             #trips = np.array(trip_table_in.loc[0:zonesDim - 1][purpose + p_a])    # Less 1 because NumPy is 0-based\
             matrix_id = my_project.bank.matrix(purpose + p_a).id    
@@ -93,15 +98,15 @@ def balance_matrices(trip_purps, my_project):
     for purpose in trip_purps:
         # For friction factors, make sure 0s in Externals are actually 0 and not fractional to avoid intrazonal trips
         my_project.matrix_calculator(result = 'mf' + purpose + 'fri', expression = '0', 
-                                 constraint_by_zone_destinations = str(emme_config['MIN_EXTERNAL']) + '-' + str(emme_config['MAX_EXTERNAL']),
-                                 constraint_by_zone_origins = str(emme_config['MIN_EXTERNAL']) + '-' + str(emme_config['MAX_EXTERNAL']))
+                                 constraint_by_zone_destinations = str(MIN_EXTERNAL) + '-' + str(MAX_EXTERNAL), 
+                                 constraint_by_zone_origins = str(MIN_EXTERNAL) + '-' + str(MAX_EXTERNAL))
         print("Balancing non-work external trips, for purpose: " + str(purpose))
         my_project.matrix_balancing(results_od_balanced_values = 'mf' + purpose + 'dis', 
                                     od_values_to_balance = 'mf' + purpose + 'fri', 
                                     origin_totals = 'mo' + purpose + 'pro', 
                                     destination_totals = 'md' + purpose + 'att', 
-                                    constraint_by_zone_destinations = '1-' + str(emme_config['MAX_EXTERNAL']),
-                                    constraint_by_zone_origins = '1-' + str(emme_config['MAX_EXTERNAL']))
+                                    constraint_by_zone_destinations = '1-' + str(MAX_EXTERNAL), 
+                                    constraint_by_zone_origins = '1-' + str(MAX_EXTERNAL))
 
 def calculate_daily_trips_externals(trip_purps, my_project):
     """ Transpose matrices to get return trips (internal-external -> external-internal) """
@@ -139,10 +144,11 @@ def emme_matrix_to_np(trip_purp_list, my_project):
         emme_data = emme_matrix.get_data() # Access emme data as numpy matrix
         emme_data = np.array(emme_data.raw_data, dtype='float64')
         filtered = np.zeros_like(emme_data)
+        START_ZONE_INDEX = dictZoneLookup[HIGH_TAZ]+1
 
         # Add only external rows and columns from emme data
-        filtered[emme_config['HIGH_TAZ']:,:] = emme_data[emme_config['HIGH_TAZ']:,:]
-        filtered[:,emme_config['HIGH_TAZ']:] = emme_data[:,emme_config['HIGH_TAZ']:]
+        filtered[START_ZONE_INDEX:,:] = emme_data[START_ZONE_INDEX:,:]
+        filtered[:,START_ZONE_INDEX:] = emme_data[:,START_ZONE_INDEX:]
         trips_by_purpose[purpose] = filtered
 
     return trips_by_purpose
@@ -150,7 +156,7 @@ def emme_matrix_to_np(trip_purp_list, my_project):
 def main():
 
     # Load the trip productions and attractions
-    trip_table = pd.read_csv(emme_config['trip_table_loc'], index_col="taz")  # total 4K Ps and As by trip purpose
+    trip_table = pd.read_csv(trip_table_loc, index_col="taz")  # total 4K Ps and As by trip purpose
 
     # Import gravity model coefficients by trip purpose from db
     conn = create_engine('sqlite:///inputs/db/soundcast_inputs.db')

@@ -1,0 +1,415 @@
+# read trips table post preprocessor and run expressions to code
+# additional data fields, with one data fields for each matrix specified below
+
+preprocessor:
+  SPEC: write_trip_matrices_annotate_trips_preprocessor
+  DF: trips
+  TABLES:
+    - tours
+    - persons
+
+# divide trip counts by household expansion factor
+HH_EXPANSION_WEIGHT_COL: sample_rate  # added when households read in
+
+# save preprocessed trips table to pipeline if desired
+SAVE_TRIPS_TABLE: False
+
+MATRICES:
+  # 5to6
+  - file_name: airport_demand_5to6.omx
+    tables:
+      - name: sov_inc1
+        data_field: DRIVEALONE_5to6_LOW
+      - name: sov_inc2
+        data_field: DRIVEALONE_5to6_MED
+      - name: sov_inc3
+        data_field: DRIVEALONE_5to6_HIGH
+      - name: hov2_inc1
+        data_field: SHARED2_5to6_LOW
+      - name: hov2_inc2
+        data_field: SHARED2_5to6_MED
+      - name: hov2_inc3
+        data_field: SHARED2_5to6_HIGH
+      - name: hov3_inc1
+        data_field: SHARED3_5to6_LOW
+      - name: hov3_inc2
+        data_field: SHARED3_5to6_MED
+      - name: hov3_inc3
+        data_field: SHARED3_5to6_HIGH
+      - name: walk
+        data_field: WALK_5to6
+      - name: walk_bus
+        data_field: WALK_BUS_5to6
+      - name: walk_lr
+        data_field: WALK_LR_5to6
+      - name: walk_cr
+        data_field: WALK_CR_5to6
+      - name: walk_fr
+        data_field: WALK_FR_5to6
+      - name: walk_fp
+        data_field: WALK_FP_5to6
+  # 6to7
+  - file_name: airport_demand_6to7.omx
+    tables:
+      - name: sov_inc1
+        data_field: DRIVEALONE_6to7_LOW
+      - name: sov_inc2
+        data_field: DRIVEALONE_6to7_MED
+      - name: sov_inc3
+        data_field: DRIVEALONE_6to7_HIGH
+      - name: hov2_inc1
+        data_field: SHARED2_6to7_LOW
+      - name: hov2_inc2
+        data_field: SHARED2_6to7_MED
+      - name: hov2_inc3
+        data_field: SHARED2_6to7_HIGH
+      - name: hov3_inc1
+        data_field: SHARED3_6to7_LOW
+      - name: hov3_inc2
+        data_field: SHARED3_6to7_MED
+      - name: hov3_inc3
+        data_field: SHARED3_6to7_HIGH
+      - name: walk
+        data_field: WALK_6to7
+      - name: walk_bus
+        data_field: WALK_BUS_6to7
+      - name: walk_lr
+        data_field: WALK_LR_6to7
+      - name: walk_cr
+        data_field: WALK_CR_6to7
+      - name: walk_fr
+        data_field: WALK_FR_6to7
+      - name: walk_fp
+        data_field: WALK_FP_6to7
+  # 7to8
+  - file_name: airport_demand_7to8.omx
+    tables:
+      - name: sov_inc1
+        data_field: DRIVEALONE_7to8_LOW
+      - name: sov_inc2
+        data_field: DRIVEALONE_7to8_MED
+      - name: sov_inc3
+        data_field: DRIVEALONE_7to8_HIGH
+      - name: hov2_inc1
+        data_field: SHARED2_7to8_LOW
+      - name: hov2_inc2
+        data_field: SHARED2_7to8_MED
+      - name: hov2_inc3
+        data_field: SHARED2_7to8_HIGH
+      - name: hov3_inc1
+        data_field: SHARED3_7to8_LOW
+      - name: hov3_inc2
+        data_field: SHARED3_7to8_MED
+      - name: hov3_inc3
+        data_field: SHARED3_7to8_HIGH
+      - name: walk
+        data_field: WALK_7to8
+      - name: walk_bus
+        data_field: WALK_BUS_7to8
+      - name: walk_lr
+        data_field: WALK_LR_7to8
+      - name: walk_cr
+        data_field: WALK_CR_7to8
+      - name: walk_fr
+        data_field: WALK_FR_7to8
+      - name: walk_fp
+        data_field: WALK_FP_7to8
+  # 8to9
+  - file_name: airport_demand_8to9.omx
+    tables:
+      - name: sov_inc1
+        data_field: DRIVEALONE_8to9_LOW
+      - name: sov_inc2
+        data_field: DRIVEALONE_8to9_MED
+      - name: sov_inc3
+        data_field: DRIVEALONE_8to9_HIGH
+      - name: hov2_inc1
+        data_field: SHARED2_8to9_LOW
+      - name: hov2_inc2
+        data_field: SHARED2_8to9_MED
+      - name: hov2_inc3
+        data_field: SHARED2_8to9_HIGH
+      - name: hov3_inc1
+        data_field: SHARED3_8to9_LOW
+      - name: hov3_inc2
+        data_field: SHARED3_8to9_MED
+      - name: hov3_inc3
+        data_field: SHARED3_8to9_HIGH
+      - name: walk
+        data_field: WALK_8to9
+      - name: walk_bus
+        data_field: WALK_BUS_8to9
+      - name: walk_lr
+        data_field: WALK_LR_8to9
+      - name: walk_cr
+        data_field: WALK_CR_8to9
+      - name: walk_fr
+        data_field: WALK_FR_8to9
+      - name: walk_fp
+        data_field: WALK_FP_8to9
+  # 9to10
+  - file_name: airport_demand_9to10.omx
+    tables:
+      - name: sov_inc1
+        data_field: DRIVEALONE_9to10_LOW
+      - name: sov_inc2
+        data_field: DRIVEALONE_9to10_MED
+      - name: sov_inc3
+        data_field: DRIVEALONE_9to10_HIGH
+      - name: hov2_inc1
+        data_field: SHARED2_9to10_LOW
+      - name: hov2_inc2
+        data_field: SHARED2_9to10_MED
+      - name: hov2_inc3
+        data_field: SHARED2_9to10_HIGH
+      - name: hov3_inc1
+        data_field: SHARED3_9to10_LOW
+      - name: hov3_inc2
+        data_field: SHARED3_9to10_MED
+      - name: hov3_inc3
+        data_field: SHARED3_9to10_HIGH
+      - name: walk
+        data_field: WALK_9to10
+      - name: walk_bus
+        data_field: WALK_BUS_9to10
+      - name: walk_lr
+        data_field: WALK_LR_9to10
+      - name: walk_cr
+        data_field: WALK_CR_9to10
+      - name: walk_fr
+        data_field: WALK_FR_9to10
+      - name: walk_fp
+        data_field: WALK_FP_9to10
+  # 10to14
+  - file_name: airport_demand_10to14.omx
+    tables:
+      - name: sov_inc1
+        data_field: DRIVEALONE_10to14_LOW
+      - name: sov_inc2
+        data_field: DRIVEALONE_10to14_MED
+      - name: sov_inc3
+        data_field: DRIVEALONE_10to14_HIGH
+      - name: hov2_inc1
+        data_field: SHARED2_10to14_LOW
+      - name: hov2_inc2
+        data_field: SHARED2_10to14_MED
+      - name: hov2_inc3
+        data_field: SHARED2_10to14_HIGH
+      - name: hov3_inc1
+        data_field: SHARED3_10to14_LOW
+      - name: hov3_inc2
+        data_field: SHARED3_10to14_MED
+      - name: hov3_inc3
+        data_field: SHARED3_10to14_HIGH
+      - name: walk
+        data_field: WALK_10to14
+      - name: walk_bus
+        data_field: WALK_BUS_10to14
+      - name: walk_lr
+        data_field: WALK_LR_10to14
+      - name: walk_cr
+        data_field: WALK_CR_10to14
+      - name: walk_fr
+        data_field: WALK_FR_10to14
+      - name: walk_fp
+        data_field: WALK_FP_10to14
+  # 14to15
+  - file_name: airport_demand_14to15.omx
+    tables:
+      - name: sov_inc1
+        data_field: DRIVEALONE_14to15_LOW
+      - name: sov_inc2
+        data_field: DRIVEALONE_14to15_MED
+      - name: sov_inc3
+        data_field: DRIVEALONE_14to15_HIGH
+      - name: hov2_inc1
+        data_field: SHARED2_14to15_LOW
+      - name: hov2_inc2
+        data_field: SHARED2_14to15_MED
+      - name: hov2_inc3
+        data_field: SHARED2_14to15_HIGH
+      - name: hov3_inc1
+        data_field: SHARED3_14to15_LOW
+      - name: hov3_inc2
+        data_field: SHARED3_14to15_MED
+      - name: hov3_inc3
+        data_field: SHARED3_14to15_HIGH
+      - name: walk
+        data_field: WALK_14to15
+      - name: walk_bus
+        data_field: WALK_BUS_14to15
+      - name: walk_lr
+        data_field: WALK_LR_14to15
+      - name: walk_cr
+        data_field: WALK_CR_14to15
+      - name: walk_fr
+        data_field: WALK_FR_14to15
+      - name: walk_fp
+        data_field: WALK_FP_14to15
+  # 15to16
+  - file_name: airport_demand_15to16.omx
+    tables:
+      - name: sov_inc1
+        data_field: DRIVEALONE_15to16_LOW
+      - name: sov_inc2
+        data_field: DRIVEALONE_15to16_MED
+      - name: sov_inc3
+        data_field: DRIVEALONE_15to16_HIGH
+      - name: hov2_inc1
+        data_field: SHARED2_15to16_LOW
+      - name: hov2_inc2
+        data_field: SHARED2_15to16_MED
+      - name: hov2_inc3
+        data_field: SHARED2_15to16_HIGH
+      - name: hov3_inc1
+        data_field: SHARED3_15to16_LOW
+      - name: hov3_inc2
+        data_field: SHARED3_15to16_MED
+      - name: hov3_inc3
+        data_field: SHARED3_15to16_HIGH
+      - name: walk
+        data_field: WALK_15to16
+      - name: walk_bus
+        data_field: WALK_BUS_15to16
+      - name: walk_lr
+        data_field: WALK_LR_15to16
+      - name: walk_cr
+        data_field: WALK_CR_15to16
+      - name: walk_fr
+        data_field: WALK_FR_15to16
+      - name: walk_fp
+        data_field: WALK_FP_15to16
+  # 16to17
+  - file_name: airport_demand_16to17.omx
+    tables:
+      - name: sov_inc1
+        data_field: DRIVEALONE_16to17_LOW
+      - name: sov_inc2
+        data_field: DRIVEALONE_16to17_MED
+      - name: sov_inc3
+        data_field: DRIVEALONE_16to17_HIGH
+      - name: hov2_inc1
+        data_field: SHARED2_16to17_LOW
+      - name: hov2_inc2
+        data_field: SHARED2_16to17_MED
+      - name: hov2_inc3
+        data_field: SHARED2_16to17_HIGH
+      - name: hov3_inc1
+        data_field: SHARED3_16to17_LOW
+      - name: hov3_inc2
+        data_field: SHARED3_16to17_MED
+      - name: hov3_inc3
+        data_field: SHARED3_16to17_HIGH
+      - name: walk
+        data_field: WALK_16to17
+      - name: walk_bus
+        data_field: WALK_BUS_16to17
+      - name: walk_lr
+        data_field: WALK_LR_16to17
+      - name: walk_cr
+        data_field: WALK_CR_16to17
+      - name: walk_fr
+        data_field: WALK_FR_16to17
+      - name: walk_fp
+        data_field: WALK_FP_16to17
+  # 17to18
+  - file_name: airport_demand_17to18.omx
+    tables:
+      - name: sov_inc1
+        data_field: DRIVEALONE_17to18_LOW
+      - name: sov_inc2
+        data_field: DRIVEALONE_17to18_MED
+      - name: sov_inc3
+        data_field: DRIVEALONE_17to18_HIGH
+      - name: hov2_inc1
+        data_field: SHARED2_17to18_LOW
+      - name: hov2_inc2
+        data_field: SHARED2_17to18_MED
+      - name: hov2_inc3
+        data_field: SHARED2_17to18_HIGH
+      - name: hov3_inc1
+        data_field: SHARED3_17to18_LOW
+      - name: hov3_inc2
+        data_field: SHARED3_17to18_MED
+      - name: hov3_inc3
+        data_field: SHARED3_17to18_HIGH
+      - name: walk
+        data_field: WALK_17to18
+      - name: walk_bus
+        data_field: WALK_BUS_17to18
+      - name: walk_lr
+        data_field: WALK_LR_17to18
+      - name: walk_cr
+        data_field: WALK_CR_17to18
+      - name: walk_fr
+        data_field: WALK_FR_17to18
+      - name: walk_fp
+        data_field: WALK_FP_17to18
+  # 18to20
+  - file_name: airport_demand_18to20.omx
+    tables:
+      - name: sov_inc1
+        data_field: DRIVEALONE_18to20_LOW
+      - name: sov_inc2
+        data_field: DRIVEALONE_18to20_MED
+      - name: sov_inc3
+        data_field: DRIVEALONE_18to20_HIGH
+      - name: hov2_inc1
+        data_field: SHARED2_18to20_LOW
+      - name: hov2_inc2
+        data_field: SHARED2_18to20_MED
+      - name: hov2_inc3
+        data_field: SHARED2_18to20_HIGH
+      - name: hov3_inc1
+        data_field: SHARED3_18to20_LOW
+      - name: hov3_inc2
+        data_field: SHARED3_18to20_MED
+      - name: hov3_inc3
+        data_field: SHARED3_18to20_HIGH
+      - name: walk
+        data_field: WALK_18to20
+      - name: walk_bus
+        data_field: WALK_BUS_18to20
+      - name: walk_lr
+        data_field: WALK_LR_18to20
+      - name: walk_cr
+        data_field: WALK_CR_18to20
+      - name: walk_fr
+        data_field: WALK_FR_18to20
+      - name: walk_fp
+        data_field: WALK_FP_18to20
+  # 20to5
+  # move transit to 18to20
+  - file_name: airport_demand_20to5.omx
+    tables:
+      - name: sov_inc1
+        data_field: DRIVEALONE_20to5_LOW
+      - name: sov_inc2
+        data_field: DRIVEALONE_20to5_MED
+      - name: sov_inc3
+        data_field: DRIVEALONE_20to5_HIGH
+      - name: hov2_inc1
+        data_field: SHARED2_20to5_LOW
+      - name: hov2_inc2
+        data_field: SHARED2_20to5_MED
+      - name: hov2_inc3
+        data_field: SHARED2_20to5_HIGH
+      - name: hov3_inc1
+        data_field: SHARED3_20to5_LOW
+      - name: hov3_inc2
+        data_field: SHARED3_20to5_MED
+      - name: hov3_inc3
+        data_field: SHARED3_20to5_HIGH
+      - name: walk
+        data_field: WALK_20to5
+      - name: walk_bus
+        data_field: WALK_BUS_20to5
+      - name: walk_lr
+        data_field: WALK_LR_20to5
+      - name: walk_cr
+        data_field: WALK_CR_20to5
+      - name: walk_fr
+        data_field: WALK_FR_20to5
+      - name: walk_fp
+        data_field: WALK_FP_20to5
+                

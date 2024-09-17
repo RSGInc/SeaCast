@@ -1,0 +1,6 @@
+Description,Target,Expression
+#,, annotate landuse table after import
+household_density in hh per acre,household_density,land_use.HH_P / (land_use.SQFT_P.clip(lower=1) / 43560)
+employment_density in hh per acre,employment_density,(land_use.EMPTOT_P / (land_use.SQFT_P.clip(lower=1) / 43560)).clip(upper=500)
+density_index,density_index,(household_density * employment_density) / (household_density + employment_density).clip(lower=1)
+,intercept,1

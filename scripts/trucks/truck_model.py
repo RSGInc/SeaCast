@@ -16,13 +16,10 @@ sys.path.append(os.path.join(os.getcwd(),"scripts"))
 sys.path.append(os.getcwd())
 #from truck_model import *
 from EmmeProject import * 
-# from truck_configuration import *
-# from emme_configuration import *
-# from input_configuration import *
-import toml
-config = toml.load(os.path.join(os.getcwd(), 'configuration/input_configuration.toml'))
-network_config = toml.load(os.path.join(os.getcwd(), 'configuration/network_configuration.toml'))
-
+from truck_configuration import *
+from emme_configuration import *
+from input_configuration import *
+          
 def network_importer(my_project):
     for scenario in list(my_project.bank.scenarios()):
            my_project.bank.delete_scenario(scenario)
@@ -33,7 +30,7 @@ def network_importer(my_project):
     my_project.delete_links()
     my_project.delete_nodes()
     my_project.process_modes('inputs/scenario/networks/modes.txt')
-    my_project.process_base_network('inputs/scenario/networks/roadway/' + network_config["truck_base_net_name"])
+    my_project.process_base_network('inputs/scenario/networks/roadway/' + truck_base_net_name)  
 
 def json_to_dictionary(dict_name):
     #Determine the Path to the input files and load them
@@ -46,12 +43,12 @@ def write_truck_trips(EmmeProject):
   
     # if h5 exists, delete it and re-write
     try:
-        os.remove(network_config['truck_trips_h5_filename'])
+        os.remove(truck_trips_h5_filename)
     except OSError:
         pass
 
-    my_store = h5py.File(network_config['truck_trips_h5_filename'], 'w')
-    for tod in network_config["tod_list"]:
+    my_store = h5py.File(truck_trips_h5_filename, 'w')
+    for tod in tod_list:
         my_store.create_group(tod)
         for name in truck_od_matrices:
             matrix_name = 'mf' + tod +'_'+ name + '_trips'      
@@ -76,7 +73,7 @@ def load_data_to_emme(balanced_prod_att, my_project, zones, conn):
     for truck_type in ['m','h','d']:    # Loop through medium (m) and heavy (h) trucks
         for datatype in ['pro', 'att']:
             col_values = np.zeros(len(zones))
-            numpy_data = balanced_prod_att[truck_type + 'tk' + datatype].values
+            numpy_data = balanced_prod_att[truck_type + 'tk' + datatype].reindex(zones,fill_value=0).values
             col_values[:len(numpy_data)] = numpy_data
             mat_name = 'mo' + truck_type + 't' + datatype
             matrix_id = my_project.bank.matrix(str(mat_name)).id
@@ -105,8 +102,8 @@ def load_data_to_emme(balanced_prod_att, my_project, zones, conn):
 
     
     data_year = int(op_cost_df['year'][0])
-    if data_year < int(config['model_year']):
-        growth_rate = (1+(operating_cost_rate*(int(config['model_year'])-data_year)))
+    if data_year < int(model_year):
+        growth_rate = (1+(operating_cost_rate*(int(model_year)-data_year)))
         op_cost_df['cents_per_mile'] = op_cost_df['value'] * growth_rate
 
     # Note: Using medium truck coefficients for delivery trucks
@@ -125,20 +122,20 @@ def import_skims(my_project, input_skims, zones, zonesDim):
     # Open GC skims from H5 container, average am/pm, import to emme:
     np_gc_skims = {}
     np_bidir_gc_skims = {}
-    for tod in network_config["truck_generalized_cost_tod"].keys():
+    for tod in truck_generalized_cost_tod.keys():
         hdf_file = h5py.File('inputs/model/roster/' + tod + '.h5', "r")
         for item in input_skims.values():
             #gc
             skim_name = item['gc_name']
             h5_skim = hdf_file['Skims'][skim_name]
             np_skim = np.matrix(h5_skim)
-            np_gc_skims[skim_name + '_' + network_config["truck_generalized_cost_tod"][tod]] = np_skim
+            np_gc_skims[skim_name + '_' + truck_generalized_cost_tod[tod]] = np_skim
         
             #distance
             skim_name = item['dist_name']
             h5_skim = hdf_file['Skims'][skim_name]
             np_skim = np.matrix(h5_skim)
-            np_gc_skims[skim_name + '_' + network_config["truck_generalized_cost_tod"][tod]] = np_skim
+            np_gc_skims[skim_name + '_' + truck_generalized_cost_tod[tod]] = np_skim
 
     #zones = my_project.current_scenario.zone_numbers
     #zonesDim = len(my_project.current_scenario.zone_numbers)
@@ -180,7 +177,7 @@ def balance_attractions(my_project):
     my_project.matrix_calculator(result = 'msmtprof', expression = 'momtpro', aggregation_origins = '+')
     my_project.matrix_calculator(result = 'msmtattf', expression = 'mdmtatt', aggregation_destinations = '+')
     my_project.matrix_calculator(result = 'msmtatfe', expression = 'mdmtatt', 
-                                 constraint_by_zone_destinations = str(network_config['LOW_STATION']) + '-' + str(network_config['HIGH_STATION']),
+                                 constraint_by_zone_destinations = str(LOW_STATION) + '-' + str(HIGH_STATION),
                                  aggregation_destinations = '+')
     my_project.matrix_calculator(result = 'mdmtatt', 
                                  expression = 'mdmtatt * ((msmtprof - msmtatfe)/(msmtattf-msmtatfe))')
@@ -189,7 +186,7 @@ def balance_attractions(my_project):
     my_project.matrix_calculator(result = 'mshtprof', expression = 'mohtpro', aggregation_origins = '+')
     my_project.matrix_calculator(result = 'mshtattf', expression = 'mdhtatt', aggregation_destinations = '+')
     my_project.matrix_calculator(result = 'mshtatfe', expression = 'mdhtatt', 
-                                 constraint_by_zone_destinations = str(network_config['LOW_STATION']) + '-' + str(network_config['HIGH_STATION']),
+                                 constraint_by_zone_destinations = str(LOW_STATION) + '-' + str(HIGH_STATION),
                                  aggregation_destinations = '+')
     my_project.matrix_calculator(result = 'mdhtatt',
                                      expression = 'mdhtatt * ((mshtprof - mshtatfe)/(mshtattf-mshtatfe))')
@@ -198,7 +195,7 @@ def balance_attractions(my_project):
     my_project.matrix_calculator(result = 'msdtprof', expression = 'modtpro', aggregation_origins = '+')
     my_project.matrix_calculator(result = 'msdtattf', expression = 'mddtatt', aggregation_destinations = '+')
     my_project.matrix_calculator(result = 'msdtatfe', expression = 'mddtatt', 
-                                 constraint_by_zone_destinations = str(network_config['LOW_STATION']) + '-' + str(network_config['HIGH_STATION']),
+                                 constraint_by_zone_destinations = str(LOW_STATION) + '-' + str(HIGH_STATION),
                                  aggregation_destinations = '+')
     my_project.matrix_calculator(result = 'mddtatt',
                                      expression = 'mddtatt * ((msdtprof - msdtatfe)/(msdtattf-msdtatfe))')
@@ -227,26 +224,26 @@ def calculate_impedance(my_project, conn):
     # set flag to 0 for external-external OD paris and all others equal to 1
     my_project.matrix_calculator(result = 'mfintflg', expression = '1')
     my_project.matrix_calculator(result = 'mfintflg', expression = '0', 
-                                 constraint_by_zone_destinations = network_config['EXTERNAL_DISTRICT'], 
-                                 constraint_by_zone_origins = network_config['EXTERNAL_DISTRICT'])
+                                 constraint_by_zone_destinations = EXTERNAL_DISTRICT, 
+                                 constraint_by_zone_origins = EXTERNAL_DISTRICT)
 
     # calculate medium truck impedances:
     my_project.matrix_calculator(result = 'mfmedimp', 
                                  expression = 'exp('+med_coeff+'*(mfbmedcs+(mfbmedds*msmedop*'+med_vot+')))*mfintflg', 
-                                 constraint_by_zone_destinations = '1-' + str(network_config['HIGH_STATION']), 
-                                 constraint_by_zone_origins = '1-' + str(network_config['HIGH_STATION']))
+                                 constraint_by_zone_destinations = '1-' + str(HIGH_STATION), 
+                                 constraint_by_zone_origins = '1-' + str(HIGH_STATION))
 
     # calculate heavy truck impedances:
     my_project.matrix_calculator(result = 'mfhvyimp', 
                                  expression = 'exp('+hvy_coeff+'*(mfbhvycs+(mfbhvyds*mshvyop*'+hvy_vot+')))*mfintflg', 
-                                 constraint_by_zone_destinations = '1-' + str(network_config['HIGH_STATION']), 
-                                 constraint_by_zone_origins = '1-' + str(network_config['HIGH_STATION']))
+                                 constraint_by_zone_destinations = '1-' + str(HIGH_STATION), 
+                                 constraint_by_zone_origins = '1-' + str(HIGH_STATION))
 
     # calculate delivery truck impedances:
     my_project.matrix_calculator(result = 'mfdelimp', 
                                  expression = 'exp('+hvy_coeff+'*(mfbdelcs+(mfbdelds*msdelop*'+del_vot+')))*mfintflg', 
-                                 constraint_by_zone_destinations = '1-' + str(network_config['HIGH_STATION']), 
-                                 constraint_by_zone_origins = '1-' + str(network_config['HIGH_STATION']))
+                                 constraint_by_zone_destinations = '1-' + str(HIGH_STATION), 
+                                 constraint_by_zone_origins = '1-' + str(HIGH_STATION))
 
 def balance_matrices(my_project):
 
@@ -255,23 +252,23 @@ def balance_matrices(my_project):
                                 od_values_to_balance = 'mfmedimp', 
                                 origin_totals = 'momtpro', 
                                 destination_totals = 'mdmtatt', 
-                                constraint_by_zone_destinations = '1-' + str(network_config['HIGH_STATION']), 
-                                constraint_by_zone_origins = '1-' + str(network_config['HIGH_STATION']))
+                                constraint_by_zone_destinations = '1-' + str(HIGH_STATION), 
+                                constraint_by_zone_origins = '1-' + str(HIGH_STATION))
     # Balance Heavy Trucks
     my_project.matrix_balancing(results_od_balanced_values = 'mfhvydis', 
                                 od_values_to_balance = 'mfhvyimp', 
                                 origin_totals = 'mohtpro', 
                                 destination_totals = 'mdhtatt', 
-                                constraint_by_zone_destinations = '1-' + str(network_config['HIGH_STATION']), 
-                                constraint_by_zone_origins = '1-' + str(network_config['HIGH_STATION']))
+                                constraint_by_zone_destinations = '1-' + str(HIGH_STATION), 
+                                constraint_by_zone_origins = '1-' + str(HIGH_STATION))
 
     # Balance Delivery Trucks
     my_project.matrix_balancing(results_od_balanced_values = 'mfdeldis', 
                                 od_values_to_balance = 'mfdelimp', 
                                 origin_totals = 'modtpro', 
                                 destination_totals = 'mddtatt', 
-                                constraint_by_zone_destinations = '1-' + str(network_config['HIGH_STATION']), 
-                                constraint_by_zone_origins = '1-' + str(network_config['HIGH_STATION']))
+                                constraint_by_zone_destinations = '1-' + str(HIGH_STATION), 
+                                constraint_by_zone_origins = '1-' + str(HIGH_STATION))
 
 def calculate_daily_trips(my_project, conn):
     #Calculate Daily OD trips:
@@ -325,14 +322,14 @@ def write_summary(my_project):
 
 def main():
 
-    my_project = EmmeProject(network_config["truck_model_project"])
+    my_project = EmmeProject(truck_model_project)
     #zones = my_project.current_scenario.zone_numbers
 
     input_skims = json_to_dictionary('input_skims')
     truck_matrix_list = pd.read_csv(r'inputs/model/trucks/truck_matrices.csv')
     
     conn = create_engine('sqlite:///inputs/db/soundcast_inputs.db')
-    balanced_prod_att = pd.read_csv(r'outputs/supplemental/7_balance_trip_ends.csv')
+    balanced_prod_att = pd.read_csv(r'outputs/supplemental/7_balance_trip_ends.csv', index_col='taz')
 
     network_importer(my_project)
     zones = my_project.current_scenario.zone_numbers
@@ -340,7 +337,7 @@ def main():
 
     # Load zone partitions (used to identify external zones)
     my_project.initialize_zone_partition('ga')
-    my_project.process_zone_partition('inputs/model/trucks/' + network_config["districts_file"])
+    my_project.process_zone_partition('inputs/model/trucks/' + districts_file)
     
     my_project.delete_matrices("ALL")
     create_matrices(my_project, truck_matrix_list)

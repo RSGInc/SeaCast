@@ -13,18 +13,12 @@
 #limitations under the License.
 
 import logging
-# from emme_configuration import main_log_file
+from emme_configuration import main_log_file
 from functools import wraps
 from time import time
 import datetime
 import os, sys, errno
 sys.path.append(os.getcwd())
-# os.chdir(r'..')
-import toml
-
-
-network_config = toml.load(os.path.join(os.getcwd(), 'configuration\\network_configuration.toml'))
-
 
 def setup_custom_logger(name):
     # create dir for main log file if it doesn't exist
@@ -33,7 +27,7 @@ def setup_custom_logger(name):
     except OSError as e:
         if e.errno != errno.EEXIST:
             raise
-    logging.basicConfig(filename=network_config['main_log_file'],format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.basicConfig(filename=main_log_file,format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     handler = logging.StreamHandler()
     logger = logging.getLogger(name)
     logger.setLevel(logging.INFO)

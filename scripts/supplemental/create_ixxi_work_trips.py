@@ -8,14 +8,10 @@ from sqlalchemy import create_engine
 sys.path.append(os.path.join(os.getcwd(),"scripts"))
 sys.path.append(os.path.join(os.getcwd(),"scripts/trucks"))
 sys.path.append(os.getcwd())
-# from emme_configuration import *
-# from input_configuration import *
+from emme_configuration import *
+from input_configuration import *
 from EmmeProject import *
-# from truck_configuration import *
-import toml
-config = toml.load(os.path.join(os.getcwd(), 'configuration/input_configuration.toml'))
-emme_config = toml.load(os.path.join(os.getcwd(), 'configuration/emme_configuration.toml'))
-network_config = toml.load(os.path.join(os.getcwd(), 'configuration/network_configuration.toml'))
+from truck_configuration import *
 
 output_dir = r'outputs/supplemental/'
 
@@ -27,7 +23,8 @@ tod_factors = {'5to6' : .04, '6to7' : .075, '7to8' : 0.115, '8to9' : 0.091, '9to
         '18to20' : 0.06, '20to5' : 0.055}
 
 # FIXME: put this somewhere else, DB?
-jblm_taz_list = [3061, 3070, 3346, 3348, 3349, 3350, 3351, 3352, 3353, 3354, 3355, 3356]
+# jblm_taz_list = [3061, 3070, 3346, 3348, 3349, 3350, 3351, 3352, 3353, 3354, 3355, 3356] # PSRC TAZ list
+jblm_taz_list = [2465, 2474, 2749, 2751, 2752, 2753, 2754, 2755, 2756, 2757, 2758, 2759]
 
 # dictionary to hold taz id and total enlisted to use to update externals
 jbml_enlisted_taz_dict = {}
@@ -43,7 +40,7 @@ def network_importer(EmmeProject):
     EmmeProject.delete_links()
     EmmeProject.delete_nodes()
     EmmeProject.process_modes('inputs/scenario/networks/modes.txt')
-    EmmeProject.process_base_network('inputs/scenario/networks/roadway/' + network_config["truck_base_net_name"])
+    EmmeProject.process_base_network('inputs/scenario/networks/roadway/' + truck_base_net_name)
 
 def h5_to_data_frame(h5_file, group_name):
     col_dict = {}
@@ -66,13 +63,13 @@ def main():
     """
 
     # Load network for supplemental trip calculations
-    my_project = EmmeProject(emme_config['supplemental_project'])
+    my_project = EmmeProject(supplemental_project)
     network_importer(my_project)
 
     # Load input data from DB and CSVs
     conn = create_engine('sqlite:///inputs/db/soundcast_inputs.db')
 
-    parcels_military = pd.read_sql('SELECT * FROM enlisted_personnel WHERE year=='+config['model_year'], con=conn)
+    parcels_military = pd.read_sql('SELECT * FROM enlisted_personnel WHERE year=='+model_year, con=conn)
     parcels_urbansim = pd.read_csv('inputs/scenario/landuse/parcels_urbansim.txt', sep=" ")
     parcels_urbansim.index = parcels_urbansim['parcelid']
     # FIXME: uniform upper/lower
@@ -119,14 +116,14 @@ def main():
     base_year_scaling = pd.read_sql('SELECT * FROM base_year_scaling', con=conn)
 
     # Base year employment
-    base_year_totemp = base_year_scaling[(base_year_scaling['year'] == int(config['base_year'])) &
+    base_year_totemp = base_year_scaling[(base_year_scaling['year'] == int(base_year)) & 
                                          (base_year_scaling['field'] == 'emptot_p')]['value'].values[0]
     model_year_totemp = parcels_urbansim['EMPTOT_P'].sum()
     emp_scaling = model_year_totemp/base_year_totemp
     #work[ixxi_cols] = work[ixxi_cols]*emp_scaling
     #externals_dont_grow=[3733]
     for col in work[ixxi_cols]:
-        work[col] = np.where((work['PSRC_TAZ'].isin(emme_config['EXTERNALS_DONT_GROW']))|(work['External_Station'].isin(emme_config['EXTERNALS_DONT_GROW'])), work[col], work[col]*emp_scaling)
+        work[col] = np.where((work['PSRC_TAZ'].isin(EXTERNALS_DONT_GROW))|(work['External_Station'].isin(EXTERNALS_DONT_GROW)), work[col], work[col]*emp_scaling)
 
     # group trips by O-D TAZ's (trips from external stations to internal TAZs)
     w_grp = work.groupby(['PSRC_TAZ','External_Station']).sum()

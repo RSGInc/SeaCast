@@ -13,9 +13,7 @@ import numpy as np
 import pandana as pdna
 import inro.emme.database.emmebank as _eb
 from pyproj import Proj, transform
-# from input_configuration import base_year
-import toml
-config = toml.load(os.path.join(os.getcwd(), 'configuration/input_configuration.toml'))
+from input_configuration import base_year
 
 
 def assign_nodes_to_dataset(dataset, network, column_name, x_name, y_name):
@@ -81,18 +79,22 @@ def get_transit_information(bank):
     rail_time = bank.matrix('auxwr').get_numpy_data() + bank.matrix('twtwr').get_numpy_data() + bank.matrix('ivtwr').get_numpy_data() 
     ferry_time = bank.matrix('auxwf').get_numpy_data() + bank.matrix('twtwf').get_numpy_data() + bank.matrix('ivtwf').get_numpy_data()
     p_ferry_time = bank.matrix('auxwp').get_numpy_data() + bank.matrix('twtwp').get_numpy_data() + bank.matrix('ivtwp').get_numpy_data() 
-    commuter_rail_time = bank.matrix('auxwc').get_numpy_data() + bank.matrix('twtwc').get_numpy_data() + bank.matrix('ivtwc').get_numpy_data() 
+    commuter_rail_time = bank.matrix('auxwc').get_numpy_data() + bank.matrix('twtwc').get_numpy_data() + bank.matrix('ivtwc').get_numpy_data()
+    current_scenario = bank.scenario('1002')
+    zonesDim = len(current_scenario.zone_numbers)
+    zones = current_scenario.zone_numbers
+    dictZoneLookup = dict((index,value) for index,value in enumerate(zones))
     # Take the shortest transit time between bus or rail
     #transit_time = np.minimum(bus_time, rail_time)
     transit_time = np.minimum.reduce([bus_time, rail_time, ferry_time, p_ferry_time, commuter_rail_time])
-    transit_time = transit_time[0:3700, 0:3700]
+    transit_time = transit_time[0:zonesDim, 0:zonesDim]
     transit_time_df = pd.DataFrame(transit_time)
     transit_time_df['from'] = transit_time_df.index
-    transit_time_df = pd.melt(transit_time_df, id_vars= 'from', value_vars=list(transit_time_df.columns[0:3700]), var_name = 'to', value_name='travel_time')
+    transit_time_df = pd.melt(transit_time_df, id_vars= 'from', value_vars=list(transit_time_df.columns[0:zonesDim]), var_name = 'to', value_name='travel_time')
 
     # Join with parcel data; add 1 to get zone ID because emme matrices are indexed starting with 0
-    transit_time_df['to'] = transit_time_df['to'] + 1 
-    transit_time_df['from'] = transit_time_df['from'] + 1
+    transit_time_df['to'] = transit_time_df['to'].map(dictZoneLookup)
+    transit_time_df['from'] = transit_time_df['from'].map(dictZoneLookup)
 
     return transit_time_df
 
@@ -227,7 +229,7 @@ def main():
     links = pd.read_csv(r'inputs/base_year/all_streets_links.csv', index_col=None)
 
     # Load geography lookups and join to parcel data
-    parcel_geog = pd.read_sql_table('parcel_'+config['base_year']+'_geography', 'sqlite:///inputs/db/soundcast_inputs.db')
+    parcel_geog = pd.read_sql_table('parcel_'+base_year+'_geography', 'sqlite:///inputs/db/soundcast_inputs.db')
     parcel_geog['region'] = 1
         
     # Create a field that identifies whether parcel is inside or outside of an RGC
@@ -292,16 +294,15 @@ def main():
         df = df.append(_df)
 
     # Add summaries by race from synthetic population
-    if 'prace' in person_df.columns:
-        avg_race_df = person_df[['hhno','pno','prace']].merge(hh_df[['hhno','hhparcel']], on='hhno', how='left')
-        avg_race_df = avg_race_df.merge(origin_dest_emp, left_on='hhparcel', right_on='PARCELID', how='left')
-        # Write person records with individual jobs access
-        avg_race_df.to_csv(os.path.join(output_dir,'transit_jobs_access_person.csv'))
-        avg_race_df  = avg_race_df.groupby('prace').mean()[['EMPTOT_P']]
-        avg_race_df = avg_race_df.reset_index()
-        avg_race_df.rename(columns={'prace': 'geography', 'EMPTOT_P': 'value'}, inplace=True)
-        avg_race_df['geography_group'] = 'race'
-        df = df.append(avg_race_df)
+    avg_race_df = person_df[['hhno','pno','prace']].merge(hh_df[['hhno','hhparcel']], on='hhno', how='left')
+    avg_race_df = avg_race_df.merge(origin_dest_emp, left_on='hhparcel', right_on='PARCELID', how='left')
+    # Write person records with individual jobs access
+    avg_race_df.to_csv(os.path.join(output_dir,'transit_jobs_access_person.csv'))
+    avg_race_df  = avg_race_df.groupby('prace').mean()[['EMPTOT_P']]
+    avg_race_df = avg_race_df.reset_index()
+    avg_race_df.rename(columns={'prace': 'geography', 'EMPTOT_P': 'value'}, inplace=True)
+    avg_race_df['geography_group'] = 'race'
+    df = df.append(avg_race_df)
 
     df.to_csv(os.path.join(output_dir,'transit_jobs_access.csv'))
 
@@ -311,15 +312,19 @@ def main():
 
     # Calculate auto time access
     auto_time = bank.matrix('sov_inc2t').get_numpy_data()
+    current_scenario = bank.scenario('1002')
+    zonesDim = len(current_scenario.zone_numbers)
+    zones = current_scenario.zone_numbers
+    dictZoneLookup = dict((index,value) for index,value in enumerate(zones))
 
-    auto_time = auto_time[0:3700, 0:3700]
+    auto_time = auto_time[0:zonesDim, 0:zonesDim]
     auto_time_df = pd.DataFrame(auto_time)
     auto_time_df['from'] = auto_time_df.index
-    auto_time_df = pd.melt(auto_time_df, id_vars= 'from', value_vars=list(auto_time_df.columns[0:3700]), var_name = 'to', value_name='travel_time')
+    auto_time_df = pd.melt(auto_time_df, id_vars= 'from', value_vars=list(auto_time_df.columns[0:zonesDim]), var_name = 'to', value_name='travel_time')
 
     # Join with parcel data; add 1 to get zone ID because emme matrices are indexed starting with 0
-    auto_time_df['to'] = auto_time_df['to'] + 1 
-    auto_time_df['from'] = auto_time_df['from'] + 1
+    auto_time_df['to'] = auto_time_df['to'].map(dictZoneLookup)
+    auto_time_df['from'] = auto_time_df['from'].map(dictZoneLookup)
 
 
     origin_dest_emp = get_parcel_data_max_travel_time(auto_time_df, auto_time_max, origin_df, dest_df, parcel_attributes_list, include_intrazonal = False)
@@ -336,15 +341,14 @@ def main():
         _df.columns = ['geography', 'value','geography_group']
         df = df.append(_df)
 
-    if 'prace' in person_df.columns:
-        avg_race_df = person_df[['hhno','pno','prace']].merge(hh_df[['hhno','hhparcel']], on='hhno', how='left')
-        avg_race_df = avg_race_df.merge(origin_dest_emp, left_on='hhparcel', right_on='PARCELID', how='left')
-        avg_race_df.to_csv(os.path.join(output_dir,'auto_jobs_access_person.csv'))
-        avg_race_df  = avg_race_df.groupby('prace').mean()[['EMPTOT_P']]
-        avg_race_df = avg_race_df.reset_index()
-        avg_race_df.rename(columns={'prace': 'geography', 'EMPTOT_P': 'value'}, inplace=True)
-        avg_race_df['geography_group'] = 'race'
-        df = df.append(avg_race_df)
+    avg_race_df = person_df[['hhno','pno','prace']].merge(hh_df[['hhno','hhparcel']], on='hhno', how='left')
+    avg_race_df = avg_race_df.merge(origin_dest_emp, left_on='hhparcel', right_on='PARCELID', how='left')
+    avg_race_df.to_csv(os.path.join(output_dir,'auto_jobs_access_person.csv'))
+    avg_race_df  = avg_race_df.groupby('prace').mean()[['EMPTOT_P']]
+    avg_race_df = avg_race_df.reset_index()
+    avg_race_df.rename(columns={'prace': 'geography', 'EMPTOT_P': 'value'}, inplace=True)
+    avg_race_df['geography_group'] = 'race'
+    df = df.append(avg_race_df)
     df.to_csv(os.path.join(output_dir,'auto_jobs_access.csv'))
 
 if __name__ == "__main__":
