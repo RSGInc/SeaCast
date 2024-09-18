@@ -1,4 +1,4 @@
-# SoundCast: the SeaCast Activity-Based Model
+# SeaCast: the city of SeaTac Activity-Based Model
 SeaCast is a travel demand model system built for the city of SeaTac and SeaTac Airport. The model depicts diverse human travel behavior and includes travel sensitivity to land use and the built environment. 
 
 ## [User's Guide](https://github.com/RSGInc/SeaCast/wiki)
