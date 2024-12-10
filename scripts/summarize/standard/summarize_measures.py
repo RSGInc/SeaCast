@@ -523,17 +523,17 @@ def main():
     all_measures['vhd_lowinc_seatac'] = network_filtered_df.loc[network_filtered_df['@subarea_flag']==1,'delay_lowinc'].sum()
 
     # Read corridor links
-    corridor_links_df = pd.read_csv(os.path.join('inputs', 'model', 'lookup', 'PM_edges_CC.csv'))
-    network_filtered_df['corridorid'] = -1
-    network_filtered_df['corridorid'] = reindex(corridor_links_df[~corridor_links_df.ID.duplicated()].set_index('ID')['Corr-Dir'], network_filtered_df['ij'])
+    # corridor_links_df = pd.read_csv(os.path.join('inputs', 'model', 'lookup', 'PM_edges_CC.csv'))
+    # network_filtered_df['corridorid'] = -1
+    # network_filtered_df['corridorid'] = reindex(corridor_links_df[~corridor_links_df.ID.duplicated()].set_index('ID')['Corr-Dir'], network_filtered_df['ij'])
 
     # Concurrency calculation
     # concurrency_df = network_filtered_df.loc[network_filtered_df['@concurrency']==1].copy()
-    corridor_delay_df = network_filtered_df.loc[(~network_filtered_df.corridorid.isna()) & (network_filtered_df.tod=='16to17')]
+    # corridor_delay_df = network_filtered_df.loc[(~network_filtered_df.corridorid.isna()) & (network_filtered_df.tod=='16to17')]
 
-    for corridor_index, corridor_df in corridor_delay_df.groupby('corridorid'):
-        metric_name = 'delayindex_corridor_num' + str(corridor_index)
-        all_measures[metric_name] = corridor_df['auto_time'].sum()/corridor_df['freeflow_time'].sum()
+    # for corridor_index, corridor_df in corridor_delay_df.groupby('corridorid'):
+    #     metric_name = 'delayindex_corridor_num' + str(corridor_index)
+    #     all_measures[metric_name] = corridor_df['auto_time'].sum()/corridor_df['freeflow_time'].sum()
 
     # Calcualte hourly delay
     # concurrency_df['delayindex'] = concurrency_df['auto_time']/concurrency_df['freeflow_time']    # delay index = congested/freeflow time

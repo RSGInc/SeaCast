@@ -39,7 +39,7 @@ def calc_heavy_truck_restrictions():
     '''Restrict truck trips by land use type.'''
 
     #  Load land use type from parcels and a lookup for landuse type codes
-    parcels = pd.read_csv(r'outputs/landuse/buffered_parcels.txt', delim_whitespace=True)
+    parcels = pd.read_csv(r'outputs/landuse/buffered_parcels.txt', sep='\s+')
     df = parcels.merge(pd.read_csv(r'inputs/model/lookup/lu_type.csv'),left_on='lutype_p',right_on='land_use_type_id')
 
     # The following list of land use types are allowed to be accessed by heavy trucks

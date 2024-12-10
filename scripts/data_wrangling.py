@@ -397,7 +397,7 @@ def update_daysim_modes():
         df = df[-df['path-type'].isin(filter(lambda x: 'knr' in x, df['path-type'].unique()))]
     df.fillna('null').to_csv(r'inputs/model/roster/psrc_roster.csv',index=False)
 
-    df = pd.read_csv(r'inputs/model/roster/templates/psrc-roster.combinations_template.csv', index_col='#')
+    df = pd.read_csv(r'inputs/model/roster/templates/psrc-roster.combinations_template.csv', index_col='#', dtype='str')
     if not include_av:
         df[['av1','av2','av3']] = 'FALSE'
     if not include_tnc:

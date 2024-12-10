@@ -293,7 +293,7 @@ def run_all_summaries():
     for script in ['daily_bank','network_summary','emissions','agg','validation','job_accessibility']:
         print(script)
         subprocess.call([sys.executable, os.path.join(base_path, script+'.py')])
-    subprocess.run('activate seatac_summary && python scripts/summarize/standard/write_html.py && deactivate', shell=True)
+    subprocess.run('conda activate seatac_summary && python scripts/summarize/standard/write_html.py', shell=True)
 
 @timed
 def run_airport(iteration):
@@ -302,7 +302,7 @@ def run_airport(iteration):
     # Update the enplanement numbers
     if iteration == 0:
         logger.info("Update the enplanements")
-        call_string = 'activate seatac_airport && python {} -c {} -e {} -n {} && deactivate'.format(
+        call_string = 'conda activate seatac_airport && python {} -c {} -e {} -n {}'.format(
             os.path.join(base_path, 'update_enplanements.py'),
             os.path.join(base_path, 'configs'),
             num_enplanements,
@@ -315,7 +315,7 @@ def run_airport(iteration):
 
     # Run the airport preprocessor
     logger.info("Start of airport preprocessor")
-    call_string = 'activate seatac_airport && python {} -c {} -d {} -o {} -s && deactivate'.format(
+    call_string = 'conda activate seatac_airport && python {} -c {} -d {} -o {} -s'.format(
         os.path.join(base_path, 'airport_preprocessor.py'),
         os.path.join(base_path, 'configs'),
         os.path.join('inputs', 'scenario', 'landuse'),
@@ -328,7 +328,7 @@ def run_airport(iteration):
     
     # Run the airport model
     logger.info("Start of airport model")
-    call_string = 'activate seatac_airport && python {} -c {} -c {} -d {} -o {} && deactivate'.format(
+    call_string = 'conda activate seatac_airport && python {} -c {} -c {} -d {} -o {}'.format(
         os.path.join(base_path, 'simulation.py'),
         os.path.join(base_path, 'configs'),
         os.path.join(base_path, 'configs_airport'),

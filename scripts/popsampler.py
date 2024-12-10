@@ -70,7 +70,7 @@ def sample_hhs(group):
             #set hh expansion factor based on actual sample size since sampling is lumpy
             sample.hhexpfac = 1.0 / (len(sample)*1.0/len(group))           
 
-    print("hhtaz %i hhincbin %s hhsizebin %s sample rate %.2f effective rate %.2f" % (group.hhtaz.min(), group.hhincbin.min(), group.hhsizebin.min(), group.sample_rate.min(), 1.0 / sample.hhexpfac.min()))
+    #print("hhtaz %i hhincbin %s hhsizebin %s sample rate %.2f effective rate %.2f" % (group.hhtaz.min(), group.hhincbin.min(), group.hhsizebin.min(), group.sample_rate.min(), 1.0 / sample.hhexpfac.min()))
     return(sample)
 
 def runPopSampler(tazSampleRateFileName, popsynFileName, popsynOutFileName):

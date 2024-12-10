@@ -18,13 +18,13 @@ import inro.emme.matrix as ematrix
 import inro.emme.database.matrix
 import inro.emme.database.emmebank as _eb
 import os, sys
-import re 
+import re
 import multiprocessing as mp
 import subprocess
 import pandas as pd
 import json
 from multiprocessing import Pool, pool
-sys.path.append(os.path.join(os.getcwd(),"inputs"))
+sys.path.append(os.path.join(os.getcwd(), "inputs"))
 sys.path.append(os.getcwd())
 from input_configuration import *
 from EmmeProject import *
@@ -37,7 +37,7 @@ class EmmeProject:
         for t in self.m.toolboxes:
             t.connection.execute("PRAGMA busy_timeout=1000")
 
-        #delete locki:
+        # delete locki:
         self.m.emmebank.dispose()
         pathlist = filepath.split("/")
         self.fullpath = filepath
@@ -47,32 +47,35 @@ class EmmeProject:
         self.tod = self.bank.title
         self.current_scenario = list(self.bank.scenarios())[0]
         self.data_explorer = self.desktop.data_explorer()
+
     def network_counts_by_element(self, element):
         network = self.current_scenario.get_network()
         d = network.element_totals
         count = d[element]
         return count
+
     def change_active_database(self, database_name):
         for database in self.data_explorer.databases():
             if database.title() == database_name:
-                
                 database.open()
                 self.bank = self.m.emmebank
                 self.tod = self.bank.title
                 self.current_scenario = list(self.bank.scenarios())[0]
+
     def process_modes(self, mode_file):
         NAMESPACE = "inro.emme.data.network.mode.mode_transaction"
         process_modes = self.m.tool(NAMESPACE)
-        process_modes(transaction_file = mode_file,
-              revert_on_error = True,
-              scenario = self.current_scenario)
-                
-    def create_scenario(self, scenario_number, scenario_title = 'test'):
+        process_modes(
+            transaction_file=mode_file,
+            revert_on_error=True,
+            scenario=self.current_scenario,
+        )
+
+    def create_scenario(self, scenario_number, scenario_title="test"):
         NAMESPACE = "inro.emme.data.scenario.create_scenario"
         create_scenario = self.m.tool(NAMESPACE)
-        create_scenario(scenario_id=scenario_number,
-                        scenario_title= scenario_title)
-   
+        create_scenario(scenario_id=scenario_number, scenario_title=scenario_title)
+
     def delete_links(self):
         if self.network_counts_by_element('links') > 0:
             NAMESPACE = "inro.emme.data.network.base.delete_links"
@@ -273,6 +276,9 @@ class EmmeProject:
         network_calc = self.m.tool(NAMESPACE)
         self.transit_segment_calc_result = network_calc(spec)
 
+    def close(self):
+        self.desktop.close()
+
 
 def json_to_dictionary(dict_name):
 
@@ -284,6 +290,3 @@ def json_to_dictionary(dict_name):
 
 def close():
     app.close()
-
-
-

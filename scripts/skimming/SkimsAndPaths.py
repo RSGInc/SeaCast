@@ -604,7 +604,7 @@ def hdf5_trips_to_Emme(my_project, hdf_filename):
     tod_index = create_trip_tod_indices(my_project.tod)
 
     #Create the HDF5 Container if needed and open it in read/write mode using "r+"
-    my_store=h5py.File(hdf_filename, "r+")
+    my_store=h5py.File(hdf_filename, "r")
 
     #Read the Matrix File from the Dictionary File and Set Unique Matrix Names
     matrix_dict = text_to_dictionary('demand_matrix_dictionary')
@@ -712,7 +712,7 @@ def hdf5_trips_to_Emme(my_project, hdf_filename):
             mat_name = matrix_dict[(int(mode[x]),int(vot[x]),av_flag)]
             myOtaz = dictZoneLookup[otaz[x]]
             myDtaz = dictZoneLookup[dtaz[x]]
-            trips = np.asscalar(np.float32(trexpfac[x]))
+            trips = np.float32(trexpfac[x]).item()
             trips = round(trips, 2)
 
             # Assign TNC trips using fractional occupancy (factor of 1 for 1 passenger, 0.5 for 2 passengers, etc.)
@@ -796,7 +796,7 @@ def load_supplemental_trips(my_project, matrix_name, zonesDim):
     tod = my_project.tod
     # Create empty array to fill with trips
     demand_matrix = np.zeros((zonesDim,zonesDim), np.float32)
-    hdf_file = h5py.File(os.path.join(supplemental_output_dir,tod + '.h5'), "r")
+    hdf_file = h5py.File(os.path.join(supplemental_output_dir,tod + '.h5'), "r+")
 
     # Open mode-specific array for this TOD and mode
     hdf_array = hdf_file[matrix_name]
@@ -819,7 +819,7 @@ def create_trip_tod_indices(tod):
         todIDListdict.setdefault(v, []).append(k)
 
     # For the given TOD, get the index of all the trips for that Time Period
-    my_store = h5py.File(hdf5_file_path, "r+")
+    my_store = h5py.File(hdf5_file_path, "r")
     daysim_set = my_store["Trip"]
     #open departure time array
     deptm = np.asarray(daysim_set["deptm"])
@@ -1022,7 +1022,7 @@ def feedback_check(emmebank_path_list):
      for emmebank_path in emmebank_path_list:
         my_bank =  _eb.Emmebank(emmebank_path)
         tod = my_bank.title
-        my_store=h5py.File('inputs/model/roster/' + tod + '.h5', "r+")
+        my_store=h5py.File('inputs/model/roster/' + tod + '.h5', "r")
         #put current time skims in numpy:
         skims_dict = {}
 
@@ -1095,7 +1095,7 @@ def volume_weight(my_project, df):
     over_df = df[df['facility_wt'] < 0].replace(to_replace=aadt_dict)
     over_df['volume_wt'] = 0
     under_df = df[df['facility_wt'] >= 0]
-    df = over_df.append(under_df)
+    df = pd.concat([over_df, under_df])
 
     return df
 
@@ -1156,30 +1156,39 @@ def calc_bike_weight(my_project, link_df):
     ''' Calculate perceived travel time weight for bikes
         based on facility attributes, slope, and vehicle traffic.'''
 
-    # Calculate weight of bike facilities
-    bike_fac_df = bike_facility_weight(my_project, link_df)
+    try:
+        # Calculate weight of bike facilities
+        bike_fac_df = bike_facility_weight(my_project, link_df)
 
-    # Calculate weight from daily traffic volumes
-    vol_df = volume_weight(my_project, bike_fac_df)
+        # Calculate weight from daily traffic volumes
+        vol_df = volume_weight(my_project, bike_fac_df)
 
-    # Calculate weight from elevation gain (for all links)
-    df = process_slope_weight(df=vol_df, my_project=my_project)
+        # Calculate weight from elevation gain (for all links)
+        df = process_slope_weight(df=vol_df, my_project=my_project)
 
-    # Calculate total weights
-    # add inverse of premium bike coeffient to set baseline as a premium bike facility with no slope (removes all negative weights)
-    # add 1 so this weight can be multiplied by original link travel time to produced "perceived travel time"
-    df['total_wt'] = 1 - np.float(facility_dict['facility_wt']['premium']) + df['facility_wt'] + df['slope_wt'] + df['volume_wt']    
+        # Calculate total weights
+        # add inverse of premium bike coeffient to set baseline as a premium bike facility with no slope (removes all negative weights)
+        # add 1 so this weight can be multiplied by original link travel time to produced "perceived travel time"
+        df["total_wt"] = (
+            1
+            - np.float64(facility_dict['facility_wt']['premium'])
+            + df["facility_wt"].astype(float)
+            + df["slope_wt"].astype(float)
+            + df["volume_wt"].astype(float)
+        )
 
-    # Calibrate ferry links
-    _index = df['modes'].str.contains("f")
-    df.loc[_index,'total_wt'] = df['total_wt']*ferry_bike_factor
+        # Calibrate ferry links
+        _index = df["modes"].str.contains("f")
+        df.loc[_index, "total_wt"] = df["total_wt"] * ferry_bike_factor
 
-    # Write link data for analysis
-    
-    df.to_csv(r'outputs/bike/bike_attr_%s.csv' % (my_project.tod,) )
+        # Write link data for analysis
 
-    # export total link weight as an Emme attribute file ('@bkwt.in')
-    write_generalized_time(df, my_project.tod)
+        df.to_csv(r"outputs/bike/bike_attr_%s.csv" % (my_project.tod,))
+
+        # export total link weight as an Emme attribute file ('@bkwt.in')
+        write_generalized_time(df, my_project.tod)
+    except ValueError:
+        sys.exit("calc bike weight failed")
 
 def bike_assignment(my_project, tod):
     ''' Assign bike trips using links weights based on slope, traffic, and facility type, for a given TOD.'''
@@ -1310,6 +1319,7 @@ def run_assignments_parallel(project_name):
     define_matrices(my_project)
 
     if not build_free_flow_skims:
+    #    airport_trips_to_Emme(my_project, os.path.join(airport_output_dir, 'airport_demand_'+my_project.tod+'.omx'))
        hdf5_trips_to_Emme(my_project, hdf5_file_path)
        matrix_controlled_rounding(my_project)
 
@@ -1408,7 +1418,7 @@ def main():
     
     daily_link_df = pd.DataFrame()
     for _df in pool_list[0]:
-        daily_link_df = daily_link_df.append(_df)
+        daily_link_df = pd.concat([daily_link_df, _df], axis=0)
         grouped = daily_link_df.groupby(['link_id'])
     daily_link_df = grouped.agg({'@tveh':sum, 'length':min, 'modes':min})
     daily_link_df.reset_index(level=0, inplace=True)

@@ -41,7 +41,7 @@ def calculate_interzonal_vmt():
     df['geog_name'] = df['@countyid'].map(county_id_lookup)
 
     # Remove links with facility type = 0 from the calculation
-    df['facility_type'] = df['data3']    # Rename for human readability
+    df['facility_type'] = df['data3'].copy()    # Rename for human readability
     df = df[df['facility_type'] > 0]
 
     # Calculate VMT by bus, SOV, HOV2, HOV3+, medium truck, heavy truck
@@ -87,8 +87,8 @@ def finalize_emissions(df, col_suffix=""):
 	pm10['pollutantID'] = 'PM10'
 	pm25 = df[df['pollutantID'].isin([110,116,117])].groupby('veh_type').sum().reset_index()
 	pm25['pollutantID'] = 'PM25'
-	df = df.append(pm10)
-	df = df.append(pm25)
+	df = pd.concat([df,pm10])
+	df = pd.concat([df,pm25])
 
 	## Sort final output table by pollutant ID
 	#df_a = df[(df['pollutantID'] != 'PM10') & (df['pollutantID'] != 'PM25')]
@@ -198,8 +198,8 @@ def calculate_intrazonal_emissions(df_running_rates, output_dir):
 	df_intra_heavy = df_intra[df_intra['veh_type'] == 'heavytruck']
 	df_intra_heavy.loc[:,'veh_type'] = 'heavy'
 
-	df_intra = df_intra_light.append(df_intra_medium)
-	df_intra = df_intra.append(df_intra_heavy)
+	df_intra = pd.concat([df_intra_light,df_intra_medium])
+	df_intra = pd.concat([df_intra,df_intra_heavy])
 
 	# For intrazonals, assume standard speed bin and roadway type for all intrazonal trips
 	speedbin = 4
@@ -225,7 +225,7 @@ def calculate_start_emissions():
     df_veh = pd.read_sql('SELECT * FROM vehicle_population WHERE year=='+base_year, con=conn)
 
     # Scale all vehicles by difference between base year and model total vehicles owned from auto onwership model
-    df_hh = pd.read_csv(r'outputs/daysim/_household.tsv', delim_whitespace=True, usecols=['hhvehs'])
+    df_hh = pd.read_csv(r'outputs/daysim/_household.tsv', sep='\t', usecols=['hhvehs'])
     tot_veh = df_hh['hhvehs'].sum()
 
     # Scale county vehicles by total change
@@ -241,7 +241,7 @@ def calculate_start_emissions():
     df_summer = df_summer[df_summer['monthID'] == 7]
     df_winter = start_rates_df[~start_rates_df['pollutantID'].isin(summer_list)]
     df_winter = df_winter[df_winter['monthID'] == 1]
-    start_rates_df = df_winter.append(df_summer)
+    start_rates_df = pd.concat([df_winter,df_summer])
 
     # Sum total emissions across all times of day, by county, for each pollutant
     start_rates_df = start_rates_df.groupby(['pollutantID','county','veh_type']).sum()[['ratePerVehicle']].reset_index()
@@ -287,7 +287,7 @@ def main():
     df_summer = df_summer[df_summer['monthID'] == 7]
     df_winter = df_running_rates[~df_running_rates['pollutantID'].isin(summer_list)]
     df_winter = df_winter[df_winter['monthID'] == 1]
-    df_running_rates = df_winter.append(df_summer)
+    df_running_rates = pd.concat([df_winter,df_summer])
 
     # Group interzonal trips and calculate interzonal emissions
     df_interzonal_vmt = calculate_interzonal_vmt()
@@ -307,7 +307,7 @@ def main():
     df_intra_group.rename(columns={'tons_tot': 'intrazonal_tons'}, inplace=True)
     df_start_group = start_emissions_df.groupby(['pollutantID','veh_type']).sum()[['start_tons']].reset_index()
 
-    summary_df = pd.merge(df_inter_group, df_intra_group)
+    summary_df = pd.merge(df_inter_group, df_intra_group, how='left').fillna(0)
     summary_df = pd.merge(summary_df, df_start_group, how='left')
     summary_df = finalize_emissions(summary_df, col_suffix="")
     summary_df.loc[~summary_df['pollutantID'].isin(['PM','PM10','PM25']),'pollutantID'] = summary_df[~summary_df['pollutantID'].isin(['PM','PM10','PM25'])]['pollutantID'].astype('int')
