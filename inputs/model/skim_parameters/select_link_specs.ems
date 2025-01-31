@@ -1,0 +1,257 @@
+{
+    "classes": [
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@slsovinc1",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@slsovinc2",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@slsovinc3",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@slhov2inc1",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@slhov2inc2",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@slhov2inc3",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@slhov3inc1",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@slhov3inc2",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@slhov3inc3",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@sltncinc1",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@sltncinc2",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@sltncinc3",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@slmedtrk",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        },
+        {
+            "analysis": {
+                "results": {
+                    "od_values": null,
+                    "selected_demand": null,
+                    "selected_link_volumes": "@slhvytrk",
+                    "selected_turn_volumes": null
+                }
+            },
+            "results": {
+                "link_volumes": null,
+                "od_travel_times": {
+                    "shortest_paths": null
+                },
+                "turn_volumes": null
+            }
+        }
+    ],
+    "cutoff_analysis": null,
+    "path_analysis": {
+        "link_component": "@slink",
+        "operator": ".max.",
+        "path_to_od_composition": {
+            "considered_paths": "ALL",
+            "operator": "average"
+        },
+        "selection_threshold": {
+            "lower": 1,
+            "upper": 1
+        },
+        "turn_component": null
+    },
+    "type": "PATH_BASED_TRAFFIC_ANALYSIS"
+}
