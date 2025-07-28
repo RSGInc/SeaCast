@@ -1,33 +1,16 @@
 
-import array as _array
-import json
 import numpy as np
 import time
 import os,sys
 import h5py
-import shutil
-import multiprocessing as mp
-import subprocess
-from multiprocessing import Pool
-import logging
-import datetime
-import argparse
-import traceback
 import pandas as pd
 sys.path.append(os.path.join(os.getcwd(),"scripts"))
 sys.path.append(os.path.join(os.getcwd(),"inputs"))
 sys.path.append(os.getcwd())
-from emme_configuration import *
-from data_wrangling import text_to_dictionary, json_to_dictionary
-import openmatrix as omx
 import random
-
-#Create a logging file to report model progress
-logging.basicConfig(filename=log_file_name, level=logging.DEBUG)
-
-#Report model starting
-current_time = str(time.strftime("%H:%M:%S"))
-logging.debug('----Began DaySim Update Airport Trips to Parking Lot script at ' + current_time)
+from settings import run_args
+from scripts.settings import state
+state = state.generate_state(run_args.args.configs_dir)
 
 hdf5_file_path = 'outputs/daysim/daysim_outputs.h5'
 
@@ -63,7 +46,7 @@ def airpot_trips_to_emp_parking_lot(hdf_filename):
     # Create a trip dataframe
     trip_df = pd.DataFrame({'tourid':tourid, 'otaz':otaz, 'dtaz':dtaz, 'tmode':mode, 'dpurp':dpurp})
     # Check if airport parking lot is already in daysim output
-    trip_df[trip_df.dtaz==AIPORT_EMP_PARKING_LOT]
+    trip_df[trip_df.dtaz==state.emme_settings.AIRPORT_EMP_PARKING_LOT].head()
 
     auto_mode = [3,4,5]
     work_purpose = [1]
@@ -74,12 +57,12 @@ def airpot_trips_to_emp_parking_lot(hdf_filename):
     airport_back_trips_index = trip_df[(trip_df.otaz==1) & (trip_df.tmode.isin(auto_mode)) & (trip_df.tourid.isin(airport_tourids))].index
     return_tourids = trip_df.loc[airport_back_trips_index].tourid
     # Sample trips that will use the employee parking lot
-    num_sample = round(len(return_tourids)*PARKING_ZONE_SAMPLE_RATE)
-    random.seed(PARKING_SAMPLE_SEED)
+    num_sample = round(len(return_tourids)*state.emme_settings.PARKING_ZONE_SAMPLE_RATE)
+    random.seed(state.emme_settings.PARKING_SAMPLE_SEED)
     update_tourids = random.sample(return_tourids.to_list(), num_sample) 
     # Update the origin and destination TAZ to employeed parking lot for identified trips
-    trip_df.loc[(trip_df.tourid.isin(update_tourids)) & (trip_df.dtaz==1) & (trip_df.tmode.isin(auto_mode)) & (trip_df.dpurp.isin(work_purpose)),'dtaz'] = int(AIPORT_EMP_PARKING_LOT)
-    trip_df.loc[(trip_df.tourid.isin(update_tourids)) & (trip_df.otaz==1) & (trip_df.tmode.isin(auto_mode)),'otaz'] = int(AIPORT_EMP_PARKING_LOT)
+    trip_df.loc[(trip_df.tourid.isin(update_tourids)) & (trip_df.dtaz==1) & (trip_df.tmode.isin(auto_mode)) & (trip_df.dpurp.isin(work_purpose)),'dtaz'] = int(state.emme_settings.AIRPORT_EMP_PARKING_LOT)
+    trip_df.loc[(trip_df.tourid.isin(update_tourids)) & (trip_df.otaz==1) & (trip_df.tmode.isin(auto_mode)),'otaz'] = int(state.emme_settings.AIRPORT_EMP_PARKING_LOT)
 
     # Update the daysim output to save the updated origin and destination taz
     del my_store["Trip"]["otaz"]
@@ -90,7 +73,7 @@ def airpot_trips_to_emp_parking_lot(hdf_filename):
 
     # Generate a file that Airport model uses to identify work trips
     work_trips_df = pd.DataFrame({'Name':['General parking at terminal', 'Airport employee off-site parking'],
-                                  'TAZ':[SEATAC, AIPORT_EMP_PARKING_LOT],
+                                  'TAZ':[state.emme_settings.SEATAC, state.emme_settings.AIRPORT_EMP_PARKING_LOT],
                                   'Employee Stalls': [len(return_tourids)-num_sample, num_sample],
                                   'Share to Terminal': [1, 1],
                                   'Public Transit Share to Terminal': [0, 1]})
@@ -99,12 +82,15 @@ def airpot_trips_to_emp_parking_lot(hdf_filename):
 
     end_time = time.time()
 
-    print('It took', round((end_time-start_time)/60,2), ' minutes to update airport work trips to employee parking lot.')
-    text = 'It took ' + str(round((end_time-start_time)/60,2)) + ' minutes to update airport work trips to employee parking lot.'
-    logging.debug(text)
+    #print('It took', round((end_time-start_time)/60,2), ' minutes to update airport work trips to employee parking lot.')
+    #text = 'It took ' + str(round((end_time-start_time)/60,2)) + ' minutes to update airport work trips to employee parking lot.'
+    #logger.debug(text)
 
 def main():
-    airpot_trips_to_emp_parking_lot(hdf5_file_path)    
+    #Report model starting
+    #current_time = str(time.strftime("%H:%M:%S"))
+    #logger.debug('----Began DaySim Update Airport Trips to Parking Lot script at ' + current_time)
+    airpot_trips_to_emp_parking_lot(hdf5_file_path)
 
 if __name__ == "__main__":
     main()

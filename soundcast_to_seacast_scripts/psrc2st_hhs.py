@@ -21,11 +21,11 @@ import h5py
 import numpy as np
 
 #input settings
-wd = r"input_files/landuse/2044"
+wd = r"input_files/landuse/2023"
 # wd = r"input_files/landuse/2018/v3.0_RTP"
 popsynFileName = "hh_and_persons.h5"
 xwalkFile = r"data/psrcprcl_to_sttaz.csv"
-out_dir = r"output_2044"
+out_dir = r"output_files"
 # out_dir = r"output_files"
 
 def reindex(series1, series2):

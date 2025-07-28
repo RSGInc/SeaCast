@@ -5,17 +5,17 @@ import pandas as pd
 import sqlalchemy as db
 
 wd = r"input_files/db"
-db_input_file = r'soundcast_inputs.db'
+db_input_file = r'soundcast_inputs_2023.db'
 st_psrc_taz = r'data/psrctaz_to_sttaz.csv'
 st_psrc_prcl = r'data/psrcprcl_to_sttaz.csv'
 st_zones_prcl = r'data/seatac_zones_parcels.csv'
 out_dir = r"output_files"
-validation_file = r'data/filtered_validation_dailies.csv'
-validation_truck_file = r'data/filtered_validation_dailies.csv'
-validation_hourly_file = r'data/filtered_validation_hourlies.csv'
+validation_file = r'data/daily_counts_filtered.csv'
+validation_truck_file = r'data/daily_counts_filtered.csv'
+validation_hourly_file = r'data/hourly_counts_filtered.csv'
 screenline_total_file = r'data/screenline_totals.csv'
 
-db_output_file = r'soundcast_inputs_st.db'
+db_output_file = r'soundcast_inputs_2023_st.db'
 conn = db.create_engine('sqlite:///'+os.path.join(wd,db_input_file))
 if os.path.exists(os.path.join(out_dir, db_output_file)):
     os.remove(os.path.join(out_dir, db_output_file))
@@ -83,11 +83,16 @@ def roundcumsum(values_):
 xwalk = pd.read_csv(st_psrc_taz).rename(columns={'PSRCTAZ':'taz', 'STTAZ':'taz_st', 'PropArea':'pctshare'})
 xwalkprcl = pd.read_csv(st_psrc_prcl).rename(columns={'ParcelID':'parcelid', 'STTAZ':'taz_st'})
 xwalkprcl = xwalkprcl.set_index('parcelid')
-stzonesprcl = pd.read_csv(st_zones_prcl)
+stzonesprcl = xwalkprcl.reset_index().set_index('taz_st').loc[:210].reset_index().rename(columns={'parcelid':'ParcelID', 'taz_st':'STTAZ'})
+# stzonesprcl = pd.read_csv(st_zones_prcl)
 validation_df = pd.read_csv(validation_file)
-validation_df = validation_df.groupby(['CountID'], as_index=False)['AADT', 'AADT_SUT', 'AADT_MUT'].sum()
-validation_truck_df = pd.read_csv(validation_truck_file)
-validation_truck_df = validation_truck_df.groupby(['CountID'], as_index=False)['AADT', 'AADT_SUT', 'AADT_MUT'].sum()
+validation_year_df = validation_df.groupby(['CountID', 'Year'], as_index=False).size().sort_values(['CountID', 'Year'], ascending=True).groupby('CountID',as_index=False).agg({'Year':'last'})
+validation_year_tuple = list(validation_year_df.itertuples(index=False, name=None))
+validation_df = validation_df[validation_df[['CountID', 'Year']].apply(tuple, axis=1).isin(validation_year_tuple)]
+validation_df = validation_df.groupby(['CountID'], as_index=False)[['AADT', 'AADT_SUT', 'AADT_MUT']].sum()
+# validation_truck_df = pd.read_csv(validation_truck_file)
+# validation_truck_df = validation_truck_df.groupby(['CountID'], as_index=False)[['AADT', 'AADT_SUT', 'AADT_MUT']].sum()
+validation_truck_df = validation_df.copy()
 validation_hourly_df = pd.read_csv(validation_hourly_file)
 validation_hourly_df = validation_hourly_df.groupby(['CountID', 'Hour'], as_index=False)['Vehicles'].sum()
 screenline_total_df = pd.read_csv(screenline_total_file)
@@ -98,31 +103,36 @@ db_tables = pd.read_sql("select tbl_name from 'main'.sqlite_master", con=conn)['
 # Store output tables in the dictionary and update as we go along the script
 output_st_tables = {st_key: pd.read_sql('select * from '+st_key, con=conn).to_dict('list') for st_key in db_tables}
 
-# Daily truck counts
-df_daily_truck_counts = validation_truck_df.groupby('CountID', as_index=False)[['AADT_SUT','AADT_MUT']].sum()
-df_daily_truck_counts = df_daily_truck_counts[(df_daily_truck_counts.AADT_SUT>0) | (df_daily_truck_counts.AADT_MUT>0)]
-df_daily_truck_counts = df_daily_truck_counts.rename(columns={'CountID':'flag', 'AADT_SUT':'observed_medt', 'AADT_MUT':'observed_hvyt'})
-output_st_tables['daily_truck_counts'] = df_daily_truck_counts
+# # Daily truck counts
+# df_daily_truck_counts = validation_truck_df.groupby('CountID', as_index=False)[['AADT_SUT','AADT_MUT']].sum()
+# df_daily_truck_counts = df_daily_truck_counts[(df_daily_truck_counts.AADT_SUT>0) | (df_daily_truck_counts.AADT_MUT>0)]
+# df_daily_truck_counts = df_daily_truck_counts.rename(columns={'CountID':'flag', 'AADT_SUT':'observed_medt', 'AADT_MUT':'observed_hvyt'})
+# output_st_tables['daily_truck_counts'] = df_daily_truck_counts
 
 # Daily counts
-traffic_counts_df = validation_df.groupby('CountID', as_index=False)['AADT'].sum().rename(columns={'AADT':'vehicles'})
+traffic_counts_df = validation_df.groupby('CountID', as_index=False)[['AADT', 'AADT_SUT', 'AADT_MUT']].sum().rename(columns={'AADT':'vehicles', 'AADT_SUT':'mtrk_vehicles', 'AADT_MUT':'htrk_vehicles'})
 df_daily_counts = pd.DataFrame.from_dict(output_st_tables.get('daily_counts'))
 count_columns = df_daily_counts.columns
 df_daily_counts = df_daily_counts.drop_duplicates()
 df_daily_counts[df_daily_counts.flag.isin(traffic_counts_df.CountID)].shape
+df_daily_county = df_daily_counts.groupby('flag').agg({'countyid':'first', 'facility_name':'first', 'location':'first'})
 df_daily_counts = df_daily_counts[~df_daily_counts.flag.isin(traffic_counts_df.CountID)]
 # df_daily_counts = df_daily_counts[df_daily_counts.flag < traffic_counts_df.CountID.min()].copy()
+# traffic_counts_df = traffic_counts_df.loc[~traffic_counts_df.CountID.isin(df_daily_counts.flag)]
 orig_sums = df_daily_counts['vehicles'].sum()
 # df_daily_counts_st_df = traffic_counts_df.groupby(['countid', 'countyid'], as_index=False)['AADT'].sum()
 df_daily_counts_st_df = traffic_counts_df.copy()
-df_daily_counts_st_df['year'] = 2018
-df_daily_counts_st_df['countyid'] = 33
+df_daily_counts_st_df['year'] = 2023
+df_daily_counts_st_df['countyid'] = reindex(df_daily_county.countyid, df_daily_counts_st_df['CountID']).fillna(-1).astype(int)
+df_daily_counts_st_df['facility_name'] = reindex(df_daily_county.facility_name, df_daily_counts_st_df['CountID']).fillna("").astype(str)
+df_daily_counts_st_df['location'] = reindex(df_daily_county.location, df_daily_counts_st_df['CountID']).fillna("").astype(str)
+df_daily_counts_st_df.loc[df_daily_counts_st_df.countyid==-1,'countyid'] = int(53)
 df_daily_counts_st_df = df_daily_counts_st_df[~df_daily_counts_st_df.CountID.isin(range(3733, 3751))]
 df_daily_counts_st_df = df_daily_counts_st_df.rename(columns={'CountID':'flag'})
 df_daily_counts_st_df['index'] = df_daily_counts['index'].max() + df_daily_counts_st_df.index + 1
 df_daily_counts_st_df = pd.concat([df_daily_counts, df_daily_counts_st_df], ignore_index=True)
 # Change countyid for countid 2796 to 33 (incorrectly classified as 53)
-df_daily_counts_st_df.loc[df_daily_counts_st_df.flag==2796,'countyid'] = 33
+# df_daily_counts_st_df.loc[df_daily_counts_st_df.flag==2796,'countyid'] = 33
 output_st_tables['daily_counts'] = df_daily_counts_st_df.to_dict('list')
 
 # Observed hourly counts
@@ -131,9 +141,10 @@ count_columns = df_hourly_counts.columns
 df_hourly_counts = df_hourly_counts.drop_duplicates()
 orig_sums = df_hourly_counts['vehicles'].sum()
 df_hourly_counts_st_df = validation_hourly_df.rename(columns={'CountID':'flag', 'Hour':'start_hour', 'Vehicles':'vehicles'})
+df_hourly_counts = df_hourly_counts[~((df_hourly_counts.flag.isin(df_hourly_counts_st_df.flag)) & (df_hourly_counts.year==2023))]
 df_hourly_counts_st_df = df_hourly_counts_st_df[~df_hourly_counts_st_df.flag.isin(range(3733, 3751))]
 df_hourly_counts_st_df['countyid'] = 53
-df_hourly_counts_st_df['year'] = 2018
+df_hourly_counts_st_df['year'] = 2023
 df_hourly_counts_st_df['index'] = df_hourly_counts['index'].max() + df_hourly_counts_st_df.index + 1
 df_hourly_counts_st_df = pd.concat([df_hourly_counts, df_hourly_counts_st_df], ignore_index=True)
 output_st_tables['hourly_counts'] = df_hourly_counts_st_df.to_dict('list')
@@ -145,49 +156,71 @@ df_screenline_counts = df_screenline_counts.drop_duplicates()
 # df_screenline_counts = df_screenline_counts[df_screenline_counts.county!='Pierce'].copy()
 orig_sums = df_screenline_counts['observed'].sum()
 df_screenline_counts_st_df = screenline_total_df.rename(columns={'Description':'name', 'new_type':'screenline_id'})
-
 df_screenline_counts_st_df['AADT'] = df_screenline_counts_st_df['AADT'].astype('int')
 # df_screenline_counts_st_df['screenline_id'] = df_screenline_counts_st_df.screenlineid
 df_screenline_counts_st_df['index'] = df_screenline_counts_st_df.index + 1 + df_screenline_counts['index'].max()
 df_screenline_counts_st_df = df_screenline_counts_st_df[['index', 'screenline_id', 'name', 'AADT']].rename(columns={'AADT':'observed'})
-df_screenline_counts_st_df['year'] = 2018
+df_screenline_counts_st_df['year'] = 2023
 df_screenline_counts_st_df['county'] = 'SeaTAC'
 df_screenline_counts_st_df = pd.concat([df_screenline_counts, df_screenline_counts_st_df], ignore_index=True)
 output_st_tables['observed_screenline_volumes'] = df_screenline_counts_st_df.to_dict('list')
 
-# External nonwork trips
+# Enlisted Personnel
 external_taz_start = 3700
-# external_nonwork_df = pd.read_sql("SELECT * FROM external_nonwork", con=conn)
-external_nonwork_df = pd.DataFrame.from_dict(output_st_tables.get('external_nonwork'))
-columns_to_adjust = [col_names for col_names in external_nonwork_df.columns if col_names != 'taz']
-orig_sums = external_nonwork_df[columns_to_adjust].sum()
-external_nonwork_st_df = xwalk.merge(external_nonwork_df, how='left', on='taz')
-external_nonwork_st_df[columns_to_adjust] = external_nonwork_st_df[columns_to_adjust].apply(lambda x: x*external_nonwork_st_df.pctshare)
-external_nonwork_st_df = external_nonwork_st_df.drop(columns=['taz']).rename(columns={'taz_st':'taz'}).drop_duplicates()
-external_nonwork_st_df = external_nonwork_st_df.groupby('taz', as_index=False)[columns_to_adjust].sum()
-external_nonwork_st_df = pd.concat([external_nonwork_st_df, external_nonwork_df[external_nonwork_df.taz>external_taz_start]], axis=0, ignore_index=True)
-for col_name, dtype_ in external_nonwork_df.dtypes.items():
-    external_nonwork_st_df[col_name] = external_nonwork_st_df[col_name].astype(dtype_)
-new_sums = external_nonwork_st_df[columns_to_adjust].sum()
+# enlisted_personnel_df = pd.read_sql("SELECT * FROM enlisted_personnel", con=conn)
+enlisted_personnel_df = pd.DataFrame.from_dict(output_st_tables.get('enlisted_personnel'))
+columns_to_adjust = [col_names for col_names in enlisted_personnel_df.columns if col_names not in ['Zone', 'year', 'ParcelID']]
+orig_sums = enlisted_personnel_df[columns_to_adjust].sum()
+enlisted_personnel_st_df = enlisted_personnel_df.copy()
+enlisted_personnel_st_df.Zone = reindex(xwalkprcl.taz_st, enlisted_personnel_st_df.ParcelID)
+# enlisted_personnel_st_df[columns_to_adjust] = enlisted_personnel_st_df[columns_to_adjust].apply(lambda x: x*enlisted_personnel_st_df.pctshare)
+# enlisted_personnel_st_df = enlisted_personnel_st_df.drop(columns=['taz']).rename(columns={'taz_st':'taz'}).drop_duplicates()
+# enlisted_personnel_st_df = enlisted_personnel_st_df.groupby('taz', as_index=False)[columns_to_adjust].sum()
+# enlisted_personnel_st_df = pd.concat([enlisted_personnel_st_df, enlisted_personnel_df[enlisted_personnel_df.taz>external_taz_start]], axis=0, ignore_index=True)
+# enlisted_personnel_st_df = enlisted_personnel_st_df[enlisted_personnel_st_df.taz>external_taz_start].copy()
+for col_name, dtype_ in enlisted_personnel_df.dtypes.items():
+    enlisted_personnel_st_df[col_name] = enlisted_personnel_st_df[col_name].astype(dtype_)
+new_sums = enlisted_personnel_st_df[columns_to_adjust].sum()
 columns_not_same = [col_names for col_names in columns_to_adjust if np.abs(orig_sums[col_names]-new_sums[col_names]) > 1e-4]
 if len(columns_not_same) > 0:
-    print("Didn't work: external_nonwork")
+    print("Didn't work: enlisted_personnel")
 else:
-    output_st_tables['external_nonwork'] = external_nonwork_st_df[external_nonwork_df.columns].to_dict('list')
+    output_st_tables['enlisted_personnel'] = enlisted_personnel_st_df[enlisted_personnel_df.columns].to_dict('list')
+
+
+# # External unadjusted trips
+# external_taz_start = 3700
+# # externals_unadjusted_df = pd.read_sql("SELECT * FROM externals_unadjusted", con=conn)
+# externals_unadjusted_df = pd.DataFrame.from_dict(output_st_tables.get('externals_unadjusted'))
+# columns_to_adjust = [col_names for col_names in externals_unadjusted_df.columns if col_names not in ['taz', 'year']]
+# orig_sums = externals_unadjusted_df[columns_to_adjust].sum()
+# externals_unadjusted_st_df = xwalk.merge(externals_unadjusted_df, how='left', on='taz')
+# externals_unadjusted_st_df[columns_to_adjust] = externals_unadjusted_st_df[columns_to_adjust].apply(lambda x: x*externals_unadjusted_st_df.pctshare)
+# externals_unadjusted_st_df = externals_unadjusted_st_df.drop(columns=['taz']).rename(columns={'taz_st':'taz'}).drop_duplicates()
+# externals_unadjusted_st_df = externals_unadjusted_st_df.groupby('taz', as_index=False)[columns_to_adjust].sum()
+# externals_unadjusted_st_df = pd.concat([externals_unadjusted_st_df, externals_unadjusted_df[externals_unadjusted_df.taz>external_taz_start]], axis=0, ignore_index=True)
+# for col_name, dtype_ in externals_unadjusted_df.dtypes.items():
+#     externals_unadjusted_st_df[col_name] = externals_unadjusted_st_df[col_name].astype(dtype_)
+# new_sums = externals_unadjusted_st_df[columns_to_adjust].sum()
+# columns_not_same = [col_names for col_names in columns_to_adjust if np.abs(orig_sums[col_names]-new_sums[col_names]) > 1e-4]
+# if len(columns_not_same) > 0:
+#     print("Didn't work: externals_unadjusted")
+# else:
+#     output_st_tables['externals_unadjusted'] = externals_unadjusted_st_df[externals_unadjusted_df.columns].to_dict('list')
 
 # External trip distribution
 external_taz_start = 3700
 # external_trip_dist = pd.read_sql('SELECT * FROM external_trip_distribution', con=conn)
 external_trip_dist = pd.DataFrame.from_dict(output_st_tables.get('external_trip_distribution'))
-external_trip_dist = external_trip_dist.drop_duplicates()
-groupby_col = ['GEOID', 'Large_Area', 'PSRC_TAZ', 'BKR_TAZ', 'External_Station', 'Station_Name']
-ixxi_cols = ['Total_IE', 'Total_EI', 'SOV_Veh_IE', 'SOV_Veh_EI','HOV2_Veh_IE','HOV2_Veh_EI','HOV3_Veh_IE','HOV3_Veh_EI']
+external_trip_dist = external_trip_dist.drop_duplicates().drop(columns=external_trip_dist.columns[0])
+groupby_col = ['PSRC_TAZ', 'External_Station']
+ixxi_cols = [col_names for col_names in external_trip_dist.columns if col_names not in groupby_col]
 orig_sums = external_trip_dist[ixxi_cols].sum()
 external_trip_dist = external_trip_dist.groupby(groupby_col, as_index=False, dropna=False)[ixxi_cols].sum()
 external_trip_dist_st_df = xwalk.merge(external_trip_dist.rename(columns={'PSRC_TAZ':'taz'}), how='left', on='taz')
 external_trip_dist_st_df = external_trip_dist_st_df[~external_trip_dist_st_df.External_Station.isna()]
 external_trip_dist_st_df[ixxi_cols] = external_trip_dist_st_df[ixxi_cols].apply(lambda x: x*external_trip_dist_st_df.pctshare)
-external_trip_dist_st_df = external_trip_dist_st_df.drop(columns=['taz']).rename(columns={'taz_st':'taz'}).drop_duplicates()
+external_trip_dist_st_df = external_trip_dist_st_df.drop(columns=['taz']).rename(columns={'taz_st':'taz'})
 external_trip_dist_st_df = external_trip_dist_st_df.rename(columns={'taz':'PSRC_TAZ'})
 # groupby_col = ['GEOID', 'Large_Area', 'taz', 'BKR_TAZ', 'External_Station', 'Station_Name']
 external_trip_dist_st_df = external_trip_dist_st_df.groupby(groupby_col, as_index=False, dropna=False)[ixxi_cols].sum()
@@ -200,6 +233,7 @@ jblm_trip_dist_df = jblm_trip_dist_df.drop(columns=['taz']).rename(columns={'taz
 jblm_trip_dist_df = jblm_trip_dist_df.rename(columns={'taz':'External_Station'})
 jblm_trip_dist_df = jblm_trip_dist_df.groupby(groupby_col, as_index=False, dropna=False)[ixxi_cols].sum()
 external_trip_dist_st_df = pd.concat([external_trip_dist_st_df[~external_trip_dist_st_df.External_Station.isin(xwalk.taz.values)], jblm_trip_dist_df], axis=0, ignore_index=True)
+# external_trip_dist_st_df = pd.concat([external_trip_dist_st_df[~external_trip_dist_st_df.External_Station.isin(xwalk.taz.values)]], axis=0, ignore_index=True)
 new_sums = external_trip_dist_st_df[ixxi_cols].sum()
 columns_not_same = [col_names for col_names in ixxi_cols if np.abs(orig_sums[col_names]-new_sums[col_names]) > 1e-4]
 if len(columns_not_same) > 0:
@@ -211,13 +245,13 @@ else:
 # total_gq_df = pd.read_sql_query("SELECT * FROM group_quarters", con=conn)
 total_gq_df = pd.DataFrame.from_dict(output_st_tables.get('group_quarters'))
 total_gq_df = total_gq_df.drop_duplicates()
-groupby_col = ['geoid10', 'taz', 'year']
-gq_cols = ['dorm_share','military_share','other_share', 'group_quarters']
+groupby_col = ['taz', 'year']
+gq_cols = ['dorms','military','other']
 total_gq_df = total_gq_df.groupby(groupby_col+gq_cols[:-1], as_index=False, dropna=False)[gq_cols[-1]].sum()
 orig_sums = total_gq_df[gq_cols[-1]].sum()
 total_gq_df_st_df = xwalk.merge(total_gq_df, how='left', on='taz')
 total_gq_df_st_df[gq_cols[-1]] = total_gq_df_st_df[gq_cols[-1]]*total_gq_df_st_df.pctshare
-total_gq_df_st_df = total_gq_df_st_df.drop(columns=['taz']).rename(columns={'taz_st':'taz'}).drop_duplicates()
+total_gq_df_st_df = total_gq_df_st_df.drop(columns=['taz']).rename(columns={'taz_st':'taz'})
 total_gq_df_st_df = total_gq_df_st_df.groupby(groupby_col+gq_cols[:-1], as_index=False, dropna=False)[gq_cols[-1]].sum()
 total_gq_df_st_df = pd.concat([total_gq_df_st_df, total_gq_df[~total_gq_df.taz.isin(xwalk.taz.unique())]], axis=0, ignore_index=True)
 for col_name, dtype_ in total_gq_df.dtypes.items():
@@ -240,7 +274,7 @@ heavy_trucks = heavy_trucks.groupby(groupby_col, as_index=False, dropna=False)[d
 orig_sums = heavy_trucks[data_col].sum()
 heavy_trucks_st_df = xwalk.merge(heavy_trucks, how='left', on='taz').dropna()
 heavy_trucks_st_df[data_col] = heavy_trucks_st_df[data_col].apply(lambda x: x*heavy_trucks_st_df.pctshare)
-heavy_trucks_st_df = heavy_trucks_st_df.drop(columns=['taz']).rename(columns={'taz_st':'taz'}).drop_duplicates().dropna()
+heavy_trucks_st_df = heavy_trucks_st_df.drop(columns=['taz']).rename(columns={'taz_st':'taz'}).dropna()
 heavy_trucks_st_df = heavy_trucks_st_df.groupby(groupby_col, as_index=False, dropna=False)[data_col].sum()
 heavy_trucks_st_df = pd.concat([heavy_trucks_st_df, heavy_trucks[~heavy_trucks.taz.isin(xwalk.taz.unique())]], axis=0, ignore_index=True)
 for col_name, dtype_ in heavy_trucks.dtypes.items():
@@ -297,6 +331,16 @@ if columns_not_same:
 else:
     output_st_tables['jblm_trips'] = jblm_trips_st_df[jblm_trips.columns].to_dict('list')
 
+# Parcel 2023 Geography
+# parcel_df = pd.read_sql('SELECT * FROM taz_geography', con=conn)
+parcel_df = pd.DataFrame.from_dict(output_st_tables.get('parcel_2023_geography'))
+parcel_df = parcel_df.drop_duplicates()
+parcel_df_st_df = parcel_df.copy()
+parcel_df_st_df['subarea_flag'] = 0
+parcel_df_st_df.loc[parcel_df_st_df.ParcelID.isin(stzonesprcl.ParcelID.values),'subarea_flag']=1
+parcel_df_st_df.TAZ = reindex(xwalkprcl.taz_st, parcel_df_st_df.ParcelID)
+output_st_tables['parcel_2023_geography'] = parcel_df_st_df.to_dict('list')
+
 
 # Parking zones
 df_parking_zones = pd.DataFrame.from_dict(output_st_tables.get('parking_zones'))
@@ -319,6 +363,21 @@ for col_name, dtype_ in df_parking_costs.dtypes.items():
     df_parking_costs_st_df[col_name] = df_parking_costs_st_df[col_name].astype(dtype_)
 output_st_tables['parking_costs'] = df_parking_costs_st_df[df_parking_costs.columns].to_dict('list')
 
+# PSRC zones
+# df_psrc = pd.read_sql("SELECT * FROM psrc_zones", con=conn)
+df_psrc = pd.DataFrame.from_dict(output_st_tables.get('psrc_zones'))
+df_psrc = df_psrc.drop_duplicates()
+df_psrc_st_df = df_psrc.merge(xwalk, how='left', on='taz').dropna()
+df_psrc_st_df = df_psrc_st_df.drop(columns=['taz', 'pctshare']).rename(columns={'taz_st':'taz'}).drop_duplicates().dropna()
+df_psrc_st_df = df_psrc_st_df[df_psrc.columns]
+df_psrc_st_df = pd.concat([df_psrc_st_df, df_psrc.loc[df_psrc.external==1,]], axis=0, ignore_index=True)
+df_psrc_st_df = df_psrc_st_df.drop(columns='record').drop_duplicates().reset_index(drop=True)
+df_psrc_st_df['record'] = df_psrc_st_df.index+1
+for col_name, dtype_ in df_psrc.dtypes.items():
+    df_psrc_st_df[col_name] = df_psrc_st_df[col_name].astype(dtype_)
+output_st_tables['psrc_zones'] = df_psrc_st_df[df_psrc.columns].to_dict('list')
+
+
 
 # Start and Running Emission Rates add 2044 data
 df_start_emission_rates_by_veh_type = pd.DataFrame.from_dict(output_st_tables.get('start_emission_rates_by_veh_type'))
@@ -340,21 +399,6 @@ df_running_emission_rates_by_veh_type_st_df = pd.concat([df_running_emission_rat
 for col_name, dtype_ in df_running_emission_rates_by_veh_type.dtypes.items():
     df_running_emission_rates_by_veh_type_st_df[col_name] = df_running_emission_rates_by_veh_type_st_df[col_name].astype(dtype_)
 output_st_tables['running_emission_rates_by_veh_type'] = df_running_emission_rates_by_veh_type_st_df[df_running_emission_rates_by_veh_type.columns].to_dict('list') 
-
-# PSRC zones
-# df_psrc = pd.read_sql("SELECT * FROM psrc_zones", con=conn)
-df_psrc = pd.DataFrame.from_dict(output_st_tables.get('psrc_zones'))
-df_psrc = df_psrc.drop_duplicates()
-df_psrc_st_df = df_psrc.merge(xwalk, how='left', on='taz').dropna()
-df_psrc_st_df = df_psrc_st_df.drop(columns=['taz', 'pctshare']).rename(columns={'taz_st':'taz'}).drop_duplicates().dropna()
-df_psrc_st_df = df_psrc_st_df[df_psrc.columns]
-df_psrc_st_df = pd.concat([df_psrc_st_df, df_psrc.loc[df_psrc.external==1,]], axis=0, ignore_index=True)
-df_psrc_st_df = df_psrc_st_df.drop(columns='record').drop_duplicates().reset_index(drop=True)
-df_psrc_st_df['record'] = df_psrc_st_df.index+1
-for col_name, dtype_ in df_psrc.dtypes.items():
-    df_psrc_st_df[col_name] = df_psrc_st_df[col_name].astype(dtype_)
-output_st_tables['psrc_zones'] = df_psrc_st_df[df_psrc.columns].to_dict('list')
-
 # SeaTac Airport
 # df_seatac = pd.read_sql("SELECT * FROM seatac", con=conn)
 df_seatac = pd.DataFrame.from_dict(output_st_tables.get('seatac'))
@@ -398,7 +442,7 @@ else:
 county_df = pd.DataFrame.from_dict(output_st_tables.get('taz_geography'))
 county_df = county_df.drop_duplicates()
 county_df_st_df = county_df.merge(xwalk, how='left', on='taz').dropna()
-county_df_st_df = county_df_st_df.drop(columns=['taz', 'pctshare']).rename(columns={'taz_st':'taz'}).drop_duplicates().dropna()
+county_df_st_df = county_df_st_df.drop(columns=['taz', 'pctshare']).rename(columns={'taz_st':'taz'}).drop_duplicates(subset='taz', keep='first').dropna()
 county_df_st_df = county_df_st_df[county_df.columns]
 for col_name, dtype_ in county_df.dtypes.items():
     county_df_st_df[col_name] = county_df_st_df[col_name].astype(dtype_)
@@ -406,15 +450,6 @@ for col_name, dtype_ in county_df.dtypes.items():
 county_df_st_df['subarea_flag'] = 0
 county_df_st_df.loc[county_df_st_df.taz.isin(stzonesprcl.STTAZ.values),'subarea_flag']=1
 output_st_tables['taz_geography'] = county_df_st_df[county_df.columns].to_dict('list')
-
-# Parcel 2018 Geography
-# parcel_df = pd.read_sql('SELECT * FROM taz_geography', con=conn)
-parcel_df = pd.DataFrame.from_dict(output_st_tables.get('parcel_2018_geography'))
-parcel_df = parcel_df.drop_duplicates()
-parcel_df_st_df = parcel_df.copy()
-parcel_df_st_df['subarea_flag'] = 0
-parcel_df_st_df.loc[parcel_df_st_df.ParcelID.isin(stzonesprcl.ParcelID.values),'subarea_flag']=1
-output_st_tables['parcel_2018_geography'] = parcel_df_st_df.to_dict('list')
 
 for key,value in output_st_tables.items():
     print('Writing table '+ key +' to the database')

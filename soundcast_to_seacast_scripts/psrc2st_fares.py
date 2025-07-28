@@ -25,8 +25,8 @@ import numpy as np
 import csv
 
 #inputs
-wd = r'input_files/networks/2018/rtp_2018_final/fares'
-fares_file = r'transit_fare_zones.ens'
+wd = r'input_files\networks\fares'
+fares_file = r'transit_fare_zones.grt'
 st_psrc_taz = r'data/psrctaz_to_sttaz.csv'
 xwalk = pd.read_csv(st_psrc_taz).rename(columns={'PSRCTAZ':'taz', 'STTAZ':'taz_st'})
 out_dir = r"output_files"
@@ -35,7 +35,7 @@ def runFaresFile(fare_file, headerskip=10):
     print('processing: ' + fare_file)
     external_zone_start = 3700
     # read psrc zone group file
-    outfile = os.path.join(out_dir,fare_file.split('.')[0] + '_st.ens')
+    outfile = os.path.join(out_dir,fare_file.split('.')[0] + '_st.grt')
     psrcFileName = os.path.join(wd, fare_file)
     #read header - use "#" as seperator as it is less likely to present in the file
     fares_districts_header = pd.read_table(psrcFileName, delimiter = "#", header = None, nrows = headerskip)
@@ -47,11 +47,11 @@ def runFaresFile(fare_file, headerskip=10):
     tazdata_st = tazdata_st.groupby('Zone_id', as_index=False).first()[["c", "type", "Zone_id"]]
     tazdata_st = pd.concat([tazdata_st, ttdata.loc[ttdata.Zone_id > external_zone_start,]], axis=0, ignore_index=True)
     fares_districts_header.to_csv(outfile, sep = '#', header = False, index = False, \
-        quoting=csv.QUOTE_NONE, quotechar='"', line_terminator='\n') #had to add space as escapechar otherwise throws an error
+        quoting=csv.QUOTE_NONE, quotechar='"', lineterminator='\n') #had to add space as escapechar otherwise throws an error
     with open(outfile, 'a') as file:
-        tazdata_st.to_csv(file, sep = " " , header = False, index = False, line_terminator='\n')
+        tazdata_st.to_csv(file, sep = " " , header = False, index = False, lineterminator='\n')
 
 if __name__== "__main__":
-    runFaresFile(r'transit_fare_zones.ens', 10)
-    shutil.copyfile(os.path.join(out_dir,r'transit_fare_zones_st.ens'),os.path.join(out_dir,r'transit_fare_zones_st.grt'))
+    runFaresFile(r'transit_fare_zones.grt', 10)
+    # shutil.copyfile(os.path.join(out_dir,r'transit_fare_zones_st.ens'),os.path.join(out_dir,r'transit_fare_zones_st.grt'))
 

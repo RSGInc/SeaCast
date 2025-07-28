@@ -91,9 +91,9 @@ def runPSRCtoPCZones():
         # write - first header and then append the updated data
         outfile = outFileName.split(".")[0]
         outfile = outfile + "_st.in"
-        header.to_csv(outfile, sep = '#', header = False, index = False, quoting=csv.QUOTE_NONE, quotechar='"', line_terminator='\n') #had to add space as escapechar otherwise throws an error
+        header.to_csv(outfile, sep = '#', header = False, index = False, quoting=csv.QUOTE_NONE, quotechar='"', lineterminator='\n') #had to add space as escapechar otherwise throws an error
         with open(outfile, 'a') as file:
-            tazdata_st.to_csv(file, sep = " ", header = False, index = False, line_terminator='\n')
+            tazdata_st.to_csv(file, sep = " ", header = False, index = False, lineterminator='\n')
 
 
 if __name__== "__main__":

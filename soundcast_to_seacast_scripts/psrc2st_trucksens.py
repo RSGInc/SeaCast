@@ -49,9 +49,9 @@ def runTruckDistrictsEns():
     tazdata_st = tazdata_st.groupby('Zone_id', as_index=False).first()[["c", "districts", "Zone_id"]]
     tazdata_st = pd.concat([tazdata_st, ttdata[ttdata.Zone_id > external_zone_start]], axis=0, ignore_index=True)
     truck_districts_header.to_csv(outfile, sep = '#', header = False, index = False, \
-        quoting=csv.QUOTE_NONE, quotechar='"', line_terminator='\n') #had to add space as escapechar otherwise throws an error
+        quoting=csv.QUOTE_NONE, quotechar='"', lineterminator='\n') #had to add space as escapechar otherwise throws an error
     with open(outfile, 'a') as file:
-        tazdata_st.to_csv(file, sep = " " , header = False, index = False, line_terminator='\n')
+        tazdata_st.to_csv(file, sep = " " , header = False, index = False, lineterminator='\n')
 
 if __name__== "__main__":
     runTruckDistrictsEns()

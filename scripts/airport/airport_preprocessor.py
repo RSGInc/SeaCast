@@ -350,6 +350,7 @@ def create_landuse(settings):
     # one person per household
     # input_lu = pd.read_csv(os.path.join(data_dir, settings['maz_input_fname']))
     input_lu = pd.read_csv(os.path.join(data_dir, settings['parcel_input_fname']), sep=' ')
+    input_lu.columns = input_lu.columns.str.upper()
 
     output_lu = input_lu.groupby('TAZ_P').sum().drop(columns=['XCOORD_P', 'YCOORD_P', 'PARCELID', 'PPRICDYP', 'PPRICHRP'])
     output_lu.index.name = 'TAZ'

@@ -17,7 +17,7 @@ hdf5_syn_pop_file: .\inputs\scenario\landuse\hh_and_persons.h5
 TAZ_index_file: .\inputs\scenario\networks\TAZIndex.txt
 
 # skim settings
-hdf5_skim_folder: .\inputs\model\roster
+hdf5_skim_folder: .\inputs\model\daysim\roster
 files_to_time_period:
   7to8: 'AM'
   5to6: 'EA'

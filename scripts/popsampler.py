@@ -20,7 +20,9 @@ import h5py
 import numpy as np
 sys.path.append(os.getcwd())
 sys.path.append(os.path.join(os.getcwd(),"inputs"))
-from input_configuration import *
+import toml
+
+config = toml.load(os.path.join(os.getcwd(), "configuration/input_configuration.toml"))
 
 def readSynPopTables(fileName):
     print("Reading {}".format(fileName))

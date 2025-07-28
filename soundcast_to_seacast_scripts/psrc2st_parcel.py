@@ -22,7 +22,7 @@ import csv
 from sqlalchemy import column
 
 # inputs
-wd = r"input_files/landuse/2018/v3.0_RTP"
+wd = r"input_files/landuse/2023"
 # wd = r"input_files/landuse/2044"
 parcel_file = 'parcels_urbansim.txt'
 # out_dir = r"output_2044"
@@ -52,25 +52,25 @@ def runPSRCtoPSRCZones():
     parcels_psrc = parcels_psrc.sort_values(by = ['parcelid'], ascending=[True])
 
     # Update the parcel 1302423 to the total employment of 14647 as per email from Mark Simpson PSRC on March 29.
-    total_emp = 14647
-    emp_fields = [field for field in parcels_fields if 'emp' in field and 'tot' not in field]
-    original_emp = parcels_psrc.loc[627564,emp_fields]
+    # total_emp = 14647
+    # emp_fields = [field for field in parcels_fields if 'emp' in field and 'tot' not in field]
+    # original_emp = parcels_psrc.loc[627564,emp_fields]
     # new_emp = original_emp*total_emp/original_emp.sum()
     # Use Mark's distributin
-    new_emp = pd.Series({'empedu_p':0,
-                         'empfoo_p':1452,
-                         'empgov_p':2542,
-                         'empind_p':8234,
-                         'empmed_p':7,
-                         'empofc_p':651,
-                         'empoth_p':75,
-                         'empret_p':465,
-                         'emprsc_p':0,
-                         'empsvc_p':1221,
-                         'emptot_p':14647})
+    # new_emp = pd.Series({'empedu_p':0,
+    #                      'empfoo_p':1452,
+    #                      'empgov_p':2542,
+    #                      'empind_p':8234,
+    #                      'empmed_p':7,
+    #                      'empofc_p':651,
+    #                      'empoth_p':75,
+    #                      'empret_p':465,
+    #                      'emprsc_p':0,
+    #                      'empsvc_p':1221,
+    #                      'emptot_p':14647})
 
-    if '2044' not in out_dir:
-        parcels_psrc.loc[parcels_psrc.parcelid==1302423,new_emp.index] = new_emp.values
+    # if '2044' not in out_dir:
+    #     parcels_psrc.loc[parcels_psrc.parcelid==1302423,new_emp.index] = new_emp.values
 
     if len(parcels_psrc) != len(parcels_psrc[~parcels_psrc.taz_p.isna()]):
         print('ERROR: some parcels do not have a psrc taz assigned')
@@ -78,7 +78,7 @@ def runPSRCtoPSRCZones():
         #write out the updated parcel file
         parcel_file_out = parcel_file.split(".")[0]+ "_st.txt"
         parcel_file_out_path = os.path.join(out_dir, parcel_file_out)
-        parcels_psrc.to_csv(parcel_file_out_path, sep = ' ', index = False,  line_terminator='\n')
+        parcels_psrc.to_csv(parcel_file_out_path, sep = ' ', index = False,  lineterminator='\n')
 
 if __name__== "__main__":
     print('started ...')
